@@ -67,11 +67,26 @@ const WINDOW_HEIGHT = 600
 
 let lastBlurTime = 0
 
+function resetWindowPosition() {
+  if (!win) return
+  const primaryDisplay = screen.getPrimaryDisplay()
+  const { width, height, x: screenX, y: screenY } = primaryDisplay.workArea
+  
+  const x = screenX + width - WINDOW_WIDTH
+  const y = screenY + height - WINDOW_HEIGHT
+  
+  win.setPosition(x, y)
+}
+
 function createTray() {
   const icon = nativeImage.createFromPath(getIconPath())
   tray = new Tray(icon)
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Show App', click: () => win?.show() },
+    { label: 'Show at Default Position', click: () => {
+      resetWindowPosition()
+      win?.show()
+    }},
     { type: 'separator' },
     { label: 'Quit', click: () => app.quit() },
   ])
