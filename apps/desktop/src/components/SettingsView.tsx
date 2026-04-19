@@ -9,7 +9,7 @@ const SettingsView: React.FC = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between rounded-xl border border-white/5 bg-zinc-900/50 p-4 transition-colors hover:bg-zinc-800/80">
           <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-blue-500/10 p-2 text-blue-500">
+            <div className="rounded-lg bg-zinc-800 p-2 text-zinc-100">
               <Zap size={18} />
             </div>
             <div className="flex flex-col">
@@ -17,14 +17,14 @@ const SettingsView: React.FC = () => {
               <span className="text-[10px] text-zinc-500">Paste immediately after selection</span>
             </div>
           </div>
-          <div className="h-5 w-10 cursor-pointer rounded-full bg-blue-500 relative transition-colors">
-            <div className="absolute right-1 top-1 h-3 w-3 rounded-full bg-white shadow-sm" />
+          <div className="h-5 w-10 cursor-pointer rounded-full bg-zinc-700 relative transition-colors">
+            <div className="absolute right-1 top-1 h-3 w-3 rounded-full bg-zinc-200 shadow-sm" />
           </div>
         </div>
 
         <div className="flex items-center justify-between rounded-xl border border-white/5 bg-zinc-900/50 p-4 transition-colors hover:bg-zinc-800/80">
           <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-purple-500/10 p-2 text-purple-500">
+            <div className="rounded-lg bg-zinc-800 p-2 text-zinc-100">
               <Keyboard size={18} />
             </div>
             <div className="flex flex-col">
@@ -37,7 +37,7 @@ const SettingsView: React.FC = () => {
 
         <div className="flex items-center justify-between rounded-xl border border-white/5 bg-zinc-900/50 p-4 transition-colors hover:bg-zinc-800/80">
           <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-green-500/10 p-2 text-green-500">
+            <div className="rounded-lg bg-zinc-800 p-2 text-zinc-100">
               <Shield size={18} />
             </div>
             <div className="flex flex-col">

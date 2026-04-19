@@ -29,7 +29,7 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
   return (
-    <nav className="sticky top-0 z-50 flex h-14 w-full items-center justify-around border-b border-white/10 bg-zinc-950/80 px-4 backdrop-blur-md drag">
+    <nav className="sticky top-0 z-50 flex h-14 w-full items-center justify-around border-b border-white/5 bg-zinc-950 px-4 drag">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
@@ -39,21 +39,15 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={cn(
-              "group relative flex flex-col items-center justify-center transition-all duration-300",
-              isActive ? "text-blue-500" : "text-zinc-400 hover:text-zinc-200"
+              "relative flex h-full items-center px-4 transition-colors",
+              isActive ? "text-zinc-100" : "text-zinc-500 hover:text-zinc-300"
             )}
             title={tab.label}
           >
-            <Icon size={20} className={cn(
-              "transition-transform duration-300",
-              isActive ? "scale-110" : "group-hover:scale-105"
-            )} />
-            <span className="mt-1 text-[10px] font-medium uppercase tracking-wider">
-              {tab.label}
-            </span>
+            <Icon size={20} />
             
             {isActive && (
-              <span className="absolute -bottom-3 h-1 w-6 rounded-t-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
+              <span className="absolute bottom-0 left-0 h-[2px] w-full bg-zinc-100" />
             )}
           </button>
         );

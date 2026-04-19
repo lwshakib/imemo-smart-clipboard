@@ -9,7 +9,7 @@ const HistoryView: React.FC = () => {
             <p className="text-sm text-zinc-300 truncate">This is a sample clipboard content number {i}. It could be a long text or a small snippet.</p>
             <div className="mt-2 flex items-center justify-between">
               <span className="text-[10px] text-zinc-500 font-medium">2 mins ago</span>
-              <button className="text-[10px] text-blue-500 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
+              <button className="text-[10px] text-zinc-400 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">Copy</button>
             </div>
           </div>
         ))}
