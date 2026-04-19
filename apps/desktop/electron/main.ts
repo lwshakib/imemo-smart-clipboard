@@ -137,6 +137,7 @@ function createWindow() {
   const { width, height, x: screenX, y: screenY } = primaryDisplay.workArea
 
   win = new BrowserWindow({
+    title: 'iMemo Smart Clipboard',
     width: WINDOW_WIDTH,
     height: WINDOW_HEIGHT,
     x: screenX + width - WINDOW_WIDTH,
