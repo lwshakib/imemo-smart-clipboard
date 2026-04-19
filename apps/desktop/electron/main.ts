@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, nativeImage, Tray, screen } from 'electron'
+import { app, BrowserWindow, Menu, nativeImage, Tray, screen, ipcMain } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -139,4 +139,8 @@ app.on('activate', () => {
 app.whenReady().then(() => {
   createWindow()
   createTray()
+})
+
+ipcMain.on('hide-window', () => {
+  win?.hide()
 })
