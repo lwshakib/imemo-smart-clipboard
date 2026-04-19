@@ -122,8 +122,31 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    }
+  }
   body {
-    @apply bg-background text-foreground;
-    }
+    @apply bg-background text-foreground selection:bg-sky-500/20 selection:text-sky-200;
+  }
+}
+
+@layer utilities {
+  details > summary {
+    list-style: none;
+  }
+  details > summary::-webkit-details-marker {
+    display: none;
+  }
+  details[open] summary ~ * {
+    animation: sweep 0.3s ease-in-out;
+  }
+}
+
+@keyframes sweep {
+  0% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
