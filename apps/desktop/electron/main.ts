@@ -240,8 +240,14 @@ ipcMain.on('hide-window', () => {
   win?.hide()
 })
 
-ipcMain.handle('history:get', () => {
-  return store.get('history')
+ipcMain.handle('history:get', (_, { offset = 0, limit = 20 } = {}) => {
+  const history = store.get('history') as ClipboardItem[]
+  const items = history.slice(offset, offset + limit)
+  return {
+    items,
+    total: history.length,
+    hasMore: offset + limit < history.length
+  }
 })
 
 ipcMain.handle('history:remove', (_, id: string) => {
@@ -260,11 +266,16 @@ ipcMain.handle('history:toggle-star', (_, id: string) => {
   return updatedHistory
 })
 
-ipcMain.handle('history:search', (_, query: string) => {
+ipcMain.handle('history:search', (_, { query, offset = 0, limit = 20 }) => {
   const history = store.get('history') as ClipboardItem[]
-  if (!query) return history
+  if (!query) return { items: history.slice(offset, offset + limit), total: history.length, hasMore: offset + limit < history.length }
   const lowerQuery = query.toLowerCase()
-  return history.filter(item => item.content.toLowerCase().includes(lowerQuery))
+  const filtered = history.filter(item => item.content.toLowerCase().includes(lowerQuery))
+  return {
+    items: filtered.slice(offset, offset + limit),
+    total: filtered.length,
+    hasMore: offset + limit < filtered.length
+  }
 })
 
 ipcMain.handle('settings:get', () => {

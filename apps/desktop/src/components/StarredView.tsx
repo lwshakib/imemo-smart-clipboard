@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Star, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Star, Trash2, Loader2 } from 'lucide-react';
 
 interface ClipboardItem {
   id: string;
@@ -8,20 +8,48 @@ interface ClipboardItem {
   isStarred: boolean;
 }
 
+const PAGE_SIZE = 20;
+
 const StarredView: React.FC = () => {
   const [items, setItems] = useState<ClipboardItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
-  const fetchStarred = async () => {
-    const history = await window.ipcRenderer.invoke('history:get');
-    setItems(history.filter((item: ClipboardItem) => item.isStarred));
-  };
+  const fetchItems = useCallback(async (isInitial = false) => {
+    if (isLoading || (!hasMore && !isInitial)) return;
+    
+    setIsLoading(true);
+    const offset = isInitial ? 0 : items.length;
+    
+    try {
+      // Note: We're still using history:get but we'll paginate and filter for efficiency
+      // Ideally we'd have a dedicated starred IPC, but this works for the 100-item limit
+      const result = await window.ipcRenderer.invoke('history:get', { offset: 0, limit: 100 });
+      const starred = result.items.filter((item: ClipboardItem) => item.isStarred);
+      
+      const newBatch = starred.slice(offset, offset + PAGE_SIZE);
+      
+      if (isInitial) {
+        setItems(newBatch);
+      } else {
+        setItems(prev => [...prev, ...newBatch]);
+      }
+      setHasMore(offset + PAGE_SIZE < starred.length);
+    } catch (error) {
+      console.error('Failed to fetch starred items:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [items.length, isLoading, hasMore]);
 
   useEffect(() => {
-    fetchStarred();
+    fetchItems(true);
     
-    // Refresh if history changes (e.g., something was unstarred in another view)
     const listener = (_event: any, updatedHistory: ClipboardItem[]) => {
-      setItems(updatedHistory.filter(item => item.isStarred));
+      const starred = updatedHistory.filter(item => item.isStarred);
+      setItems(starred.slice(0, PAGE_SIZE));
+      setHasMore(starred.length > PAGE_SIZE);
     };
 
     window.ipcRenderer.on('history:updated', listener);
@@ -30,20 +58,41 @@ const StarredView: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          fetchItems();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [fetchItems, hasMore, isLoading]);
+
   const handleItemClick = (content: string) => {
     window.ipcRenderer.send('clipboard:paste-item', content);
   };
 
   const handleRemove = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    const updated = await window.ipcRenderer.invoke('history:remove', id);
-    setItems(updated.filter((item: ClipboardItem) => item.isStarred));
+    await window.ipcRenderer.invoke('history:remove', id);
+    setItems(items.filter(item => item.id !== id));
   };
 
   const handleToggleStar = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    const updated = await window.ipcRenderer.invoke('history:toggle-star', id);
-    setItems(updated.filter((item: ClipboardItem) => item.isStarred));
+    await window.ipcRenderer.invoke('history:toggle-star', id);
+    setItems(items.filter(item => item.id !== id));
   };
 
   const formatTime = (timestamp: number) => {
@@ -53,8 +102,8 @@ const StarredView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col p-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      {items.length === 0 ? (
+    <div className="flex flex-col p-4 animate-in fade-in slide-in-from-bottom-2 duration-500 min-h-screen">
+      {items.length === 0 && !isLoading ? (
         <div className="flex flex-col items-center justify-center p-10 h-[400px] text-center">
           <div className="rounded-full bg-zinc-800 p-4 mb-4">
             <Star size={32} className="text-zinc-600" />
@@ -65,7 +114,7 @@ const StarredView: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3 pb-8">
           {items.map((item) => (
             <div 
               key={item.id} 
@@ -93,6 +142,10 @@ const StarredView: React.FC = () => {
               </div>
             </div>
           ))}
+          
+          <div ref={observerTarget} className="h-10 flex items-center justify-center">
+            {isLoading && <Loader2 className="animate-spin text-zinc-600" size={20} />}
+          </div>
         </div>
       )}
     </div>

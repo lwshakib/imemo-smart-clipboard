@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search as SearchIcon, Trash2, Star } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Search as SearchIcon, Trash2, Star, Loader2 } from 'lucide-react';
 
 interface ClipboardItem {
   id: string;
@@ -8,27 +8,68 @@ interface ClipboardItem {
   isStarred: boolean;
 }
 
+const PAGE_SIZE = 20;
+
 const SearchView: React.FC = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ClipboardItem[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
-  const handleSearch = async () => {
-    if (!query.trim()) {
-      setResults([]);
-      setHasSearched(false);
-      return;
+  const fetchResults = useCallback(async (isInitial = false) => {
+    if (isLoading || (!hasMore && !isInitial)) return;
+    if (!query.trim()) return;
+
+    setIsLoading(true);
+    const offset = isInitial ? 0 : results.length;
+
+    try {
+      const result = await window.ipcRenderer.invoke('history:search', { query, offset, limit: PAGE_SIZE });
+      
+      if (isInitial) {
+        setResults(result.items);
+      } else {
+        setResults(prev => [...prev, ...result.items]);
+      }
+      setHasMore(result.hasMore);
+      setHasSearched(true);
+    } catch (error) {
+      console.error('Failed to search history:', error);
+    } finally {
+      setIsLoading(false);
     }
-    const searchResults = await window.ipcRenderer.invoke('history:search', query);
-    setResults(searchResults);
-    setHasSearched(true);
-  };
+  }, [query, results.length, isLoading, hasMore]);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      handleSearch();
+      setHasMore(true); // Reset hasMore for new search
+      setResults([]);   // Clear old results
+      fetchResults(true);
     }
   };
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          fetchResults();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [fetchResults, hasMore, isLoading]);
 
   const handleItemClick = (content: string) => {
     window.ipcRenderer.send('clipboard:paste-item', content);
@@ -36,13 +77,13 @@ const SearchView: React.FC = () => {
 
   const handleRemove = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    const updated = await window.ipcRenderer.invoke('history:remove', id);
+    await window.ipcRenderer.invoke('history:remove', id);
     setResults(results.filter(item => item.id !== id));
   };
 
   const handleToggleStar = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    const updated = await window.ipcRenderer.invoke('history:toggle-star', id);
+    await window.ipcRenderer.invoke('history:toggle-star', id);
     setResults(results.map(item => 
       item.id === id ? { ...item, isStarred: !item.isStarred } : item
     ));
@@ -55,7 +96,7 @@ const SearchView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col p-4 animate-in fade-in duration-500">
+    <div className="flex flex-col p-4 animate-in fade-in duration-500 min-h-screen">
       <div className="relative mb-6">
         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
         <input 
@@ -68,42 +109,48 @@ const SearchView: React.FC = () => {
         />
       </div>
 
-      <div className="space-y-3">
-        {hasSearched && results.length === 0 ? (
+      <div className="space-y-3 pb-8">
+        {hasSearched && results.length === 0 && !isLoading ? (
           <div className="flex flex-col items-center justify-center pt-10 text-center">
             <p className="text-sm text-zinc-500">No matches found for "{query}"</p>
           </div>
         ) : (
-          results.map((item) => (
-            <div 
-              key={item.id} 
-              onClick={() => handleItemClick(item.content)}
-              className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/5 bg-zinc-900/50 p-4 transition-all hover:bg-zinc-800/80 active:scale-[0.98]"
-            >
-              <p className="text-sm text-zinc-300 truncate">{item.content}</p>
-              <div className="mt-2 flex items-center justify-between">
-                <span className="text-[10px] text-zinc-500 font-medium">{formatTime(item.timestamp)}</span>
-                
-                <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button 
-                    onClick={(e) => handleToggleStar(e, item.id)}
-                    className={`transition-colors ${item.isStarred ? 'text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
-                  >
-                    <Star size={14} fill={item.isStarred ? "currentColor" : "none"} />
-                  </button>
-                  <button 
-                    onClick={(e) => handleRemove(e, item.id)}
-                    className="text-zinc-500 hover:text-zinc-300 transition-colors"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+          <>
+            {results.map((item) => (
+              <div 
+                key={item.id} 
+                onClick={() => handleItemClick(item.content)}
+                className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/5 bg-zinc-900/50 p-4 transition-all hover:bg-zinc-800/80 active:scale-[0.98]"
+              >
+                <p className="text-sm text-zinc-300 truncate">{item.content}</p>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-[10px] text-zinc-500 font-medium">{formatTime(item.timestamp)}</span>
+                  
+                  <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={(e) => handleToggleStar(e, item.id)}
+                      className={`transition-colors ${item.isStarred ? 'text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    >
+                      <Star size={14} fill={item.isStarred ? "currentColor" : "none"} />
+                    </button>
+                    <button 
+                      onClick={(e) => handleRemove(e, item.id)}
+                      className="text-zinc-500 hover:text-zinc-300 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
               </div>
+            ))}
+
+            <div ref={observerTarget} className="h-10 flex items-center justify-center">
+              {isLoading && <Loader2 className="animate-spin text-zinc-600" size={20} />}
             </div>
-          ))
+          </>
         )}
         
-        {!hasSearched && (
+        {!hasSearched && !isLoading && (
           <div className="flex flex-col items-center justify-center pt-10 text-center">
             <p className="text-sm text-zinc-500">Search through your local clipboard history.</p>
           </div>
