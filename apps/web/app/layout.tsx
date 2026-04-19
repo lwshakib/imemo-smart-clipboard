@@ -1,5 +1,5 @@
-import React from "react"
 import type { Metadata } from "next"
+import type { ReactNode } from "react"
 import { Inter, Geist_Mono } from "next/font/google"
 
 import "@workspace/ui/globals.css"
@@ -24,8 +24,8 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
-}>): React.ReactNode {
+  children: ReactNode
+}>): ReactNode {
   return (
     <html
       lang="en"

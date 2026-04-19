@@ -80,14 +80,14 @@ const HistoryView: React.FC = () => {
 
   const handleRemove = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    const updated = await window.ipcRenderer.invoke('history:remove', id);
+    await window.ipcRenderer.invoke('history:remove', id);
     // After removal, it's safer to just update the local state than refetch everything
     setItems(items.filter(item => item.id !== id));
   };
 
   const handleToggleStar = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    const updated = await window.ipcRenderer.invoke('history:toggle-star', id);
+    await window.ipcRenderer.invoke('history:toggle-star', id);
     setItems(items.map(item => item.id === id ? { ...item, isStarred: !item.isStarred } : item));
   };
 

@@ -3,10 +3,16 @@
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes"
 
-function ThemeProvider({
+// Since we've deduped types via tsconfig, we can now safely use React.Node/React.ComponentProps
+// We explicitely define children to assist with the React 19 transition requirements.
+interface ThemeProviderProps extends React.ComponentProps<typeof NextThemesProvider> {
+  children: React.ReactNode
+}
+
+export function ThemeProvider({
   children,
   ...props
-}: React.ComponentProps<typeof NextThemesProvider>) {
+}: ThemeProviderProps) {
   return (
     <NextThemesProvider
       attribute="class"
@@ -67,5 +73,3 @@ function ThemeHotkey() {
 
   return null
 }
-
-export { ThemeProvider }

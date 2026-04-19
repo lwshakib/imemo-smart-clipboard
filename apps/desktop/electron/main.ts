@@ -1,12 +1,10 @@
 import { app, BrowserWindow, Menu, nativeImage, Tray, screen, ipcMain, clipboard, globalShortcut, Notification } from 'electron'
 import { v4 as uuidv4 } from 'uuid'
 import Store from 'electron-store'
-import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { exec } from 'node:child_process'
 
-const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 app.name = 'iMemo Smart Clipboard'
@@ -313,7 +311,7 @@ ipcMain.handle('settings:update', (_, newSettings: any) => {
   return newSettings
 })
 
-ipcMain.on('clipboard:paste-item', (event, content: string) => {
+ipcMain.on('clipboard:paste-item', (_event, content: string) => {
   clipboard.writeText(content)
   win?.hide()
   
