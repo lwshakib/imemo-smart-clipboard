@@ -51,6 +51,8 @@ const WINDOW_WIDTH = 400
 const WINDOW_HEIGHT = 600
 
 
+let lastBlurTime = 0
+
 function createTray() {
   const icon = nativeImage.createFromPath(getIconPath())
   tray = new Tray(icon)
@@ -66,7 +68,11 @@ function createTray() {
     if (win?.isVisible()) {
       win.hide()
     } else {
-      win?.show()
+      // If it was blurred less than 200ms ago, it was likely blurred by clicking the tray icon.
+      // In that case, we don't want to show it again.
+      if (Date.now() - lastBlurTime > 200) {
+        win?.show()
+      }
     }
   })
 }
@@ -96,6 +102,7 @@ function createWindow() {
 
   // Hide when clicking away
   win.on('blur', () => {
+    lastBlurTime = Date.now()
     win?.hide()
   })
 
