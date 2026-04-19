@@ -1,10 +1,30 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, Menu, nativeImage, Tray, screen } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+/**
+ * Utility function to get the correct icon path based on the current operating system.
+ */
+const getIconPath = (): string => {
+  const platform = process.platform
+  const basePath = process.env.APP_ROOT
+
+  if (!basePath) return ''
+
+  switch (platform) {
+    case 'win32':
+      return path.join(basePath, 'public', 'icons', 'win', 'icon.ico')
+    case 'darwin':
+      return path.join(basePath, 'public', 'icons', 'mac', 'icon.icns')
+    case 'linux':
+    default:
+      return path.join(basePath, 'public', 'icons', 'png', '256x256.png')
+  }
+}
 
 // The built directory structure
 //
@@ -25,13 +45,64 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
 let win: BrowserWindow | null
+let tray: Tray | null = null
+
+const WINDOW_WIDTH = 400
+const WINDOW_HEIGHT = 600
+
+
+function createTray() {
+  const icon = nativeImage.createFromPath(getIconPath())
+  tray = new Tray(icon)
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Show App', click: () => win?.show() },
+    { type: 'separator' },
+    { label: 'Quit', click: () => app.quit() },
+  ])
+  tray.setToolTip('iMemo Smart Clipboard')
+  tray.setContextMenu(contextMenu)
+
+  tray.on('click', () => {
+    if (win?.isVisible()) {
+      win.hide()
+    } else {
+      win?.show()
+    }
+  })
+}
 
 function createWindow() {
+  const primaryDisplay = screen.getPrimaryDisplay()
+  const { width, height, x: screenX, y: screenY } = primaryDisplay.workArea
+
   win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    width: WINDOW_WIDTH,
+    height: WINDOW_HEIGHT,
+    x: screenX + width - WINDOW_WIDTH,
+    y: screenY + height - WINDOW_HEIGHT,
+    icon: getIconPath(),
+    frame: false,
+    resizable: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
     },
+  })
+
+  // Remove the menu bar
+  Menu.setApplicationMenu(null)
+
+  // Hide when clicking away
+  win.on('blur', () => {
+    win?.hide()
+  })
+
+  // Minimize to tray
+  win.on('minimize', (event: any) => {
+    event.preventDefault()
+    win?.hide()
   })
 
   // Test active push message to Renderer-process.
@@ -65,4 +136,7 @@ app.on('activate', () => {
   }
 })
 
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+  createWindow()
+  createTray()
+})
