@@ -146,6 +146,12 @@ app.on('activate', () => {
 app.whenReady().then(() => {
   createWindow()
   createTray()
+
+  // Enable launch at startup
+  app.setLoginItemSettings({
+    openAtLogin: true,
+    path: app.getPath('exe'),
+  })
 })
 
 ipcMain.on('hide-window', () => {
