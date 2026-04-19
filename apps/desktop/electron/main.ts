@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, nativeImage, Tray, screen, ipcMain, clipboard, globalShortcut } from 'electron'
+import { app, BrowserWindow, Menu, nativeImage, Tray, screen, ipcMain, clipboard, globalShortcut, Notification } from 'electron'
 import { v4 as uuidv4 } from 'uuid'
 import Store from 'electron-store'
 import { createRequire } from 'node:module'
@@ -51,8 +51,10 @@ const store = new Store({
   defaults: {
     history: [] as ClipboardItem[],
     settings: {
-      instantPaste: false,
-      globalHotkey: 'Alt+V'
+      instantPaste: true,
+      globalHotkey: 'Alt+V',
+      startOnStartup: true,
+      showNotifications: true
     }
   }
 })
@@ -116,6 +118,18 @@ function simulatePaste() {
     const command = `osascript -e 'tell application "System Events" to keystroke "v" using command down'`
     exec(command)
   }
+}
+
+function showClipboardNotification(content: string) {
+  const settings = store.get('settings') as any
+  if (!settings.showNotifications) return
+
+  new Notification({
+    title: 'Copied to iMemo',
+    body: content.length > 50 ? content.substring(0, 50) + '...' : content,
+    silent: true,
+    icon: getIconPath()
+  }).show()
 }
 
 function createWindow() {
@@ -211,6 +225,9 @@ app.whenReady().then(() => {
       
       // Notify renderer
       win?.webContents.send('history:updated', updatedHistory)
+
+      // Show desktop notification
+      showClipboardNotification(currentText)
     }
   }, 500)
 
@@ -254,7 +271,17 @@ ipcMain.handle('settings:get', () => {
 })
 
 ipcMain.handle('settings:update', (_, newSettings: any) => {
+  const oldSettings = store.get('settings') as any
   store.set('settings', newSettings)
+  
+  // Handle start on startup change
+  if (newSettings.startOnStartup !== oldSettings.startOnStartup) {
+    app.setLoginItemSettings({
+      openAtLogin: newSettings.startOnStartup,
+      path: app.getPath('exe'),
+    })
+  }
+
   registerHotkey() // Re-register in case hotkey changed
   return newSettings
 })
