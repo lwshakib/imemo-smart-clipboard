@@ -1,10 +1,15 @@
-import { app, BrowserWindow, Menu, nativeImage, Tray, screen, ipcMain } from 'electron'
+import { app, BrowserWindow, Menu, nativeImage, Tray, screen, ipcMain, clipboard, globalShortcut } from 'electron'
+import { v4 as uuidv4 } from 'uuid'
+import Store from 'electron-store'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { exec } from 'node:child_process'
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+app.name = 'iMemo Smart Clipboard'
 
 /**
  * Utility function to get the correct icon path based on the current operating system.
@@ -26,30 +31,37 @@ const getIconPath = (): string => {
   }
 }
 
-// The built directory structure
-//
-// ├─┬─┬ dist
-// │ │ └── index.html
-// │ │
-// │ ├─┬ dist-electron
-// │ │ ├── main.js
-// │ │ └── preload.mjs
-// │
+// 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 process.env.APP_ROOT = path.join(__dirname, '..')
 
-// 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
+interface ClipboardItem {
+  id: string
+  content: string
+  timestamp: number
+  isStarred: boolean
+}
+
+const store = new Store({
+  defaults: {
+    history: [] as ClipboardItem[],
+    settings: {
+      instantPaste: false,
+      globalHotkey: 'Alt+V'
+    }
+  }
+})
+
 let win: BrowserWindow | null
 let tray: Tray | null = null
 
 const WINDOW_WIDTH = 400
 const WINDOW_HEIGHT = 600
-
 
 let lastBlurTime = 0
 
@@ -65,16 +77,45 @@ function createTray() {
   tray.setContextMenu(contextMenu)
 
   tray.on('click', () => {
-    if (win?.isVisible()) {
-      win.hide()
-    } else {
-      // If it was blurred less than 200ms ago, it was likely blurred by clicking the tray icon.
-      // In that case, we don't want to show it again.
-      if (Date.now() - lastBlurTime > 200) {
-        win?.show()
-      }
-    }
+    toggleWindow()
   })
+}
+
+function toggleWindow() {
+  if (win?.isVisible()) {
+    win.hide()
+  } else {
+    if (Date.now() - lastBlurTime > 200) {
+      win?.show()
+    }
+  }
+}
+
+function registerHotkey() {
+  const settings = store.get('settings') as any
+  const hotkey = settings.globalHotkey || 'Alt+V'
+  
+  globalShortcut.unregisterAll()
+  try {
+    globalShortcut.register(hotkey, () => {
+      toggleWindow()
+    })
+  } catch (e) {
+    console.error('Failed to register hotkey:', e)
+  }
+}
+
+function simulatePaste() {
+  const platform = process.platform
+  if (platform === 'win32') {
+    // Windows: Use PowerShell to send Ctrl+V
+    const command = `powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^v')"`
+    exec(command)
+  } else if (platform === 'darwin') {
+    // macOS: Use AppleScript to send Cmd+V
+    const command = `osascript -e 'tell application "System Events" to keystroke "v" using command down'`
+    exec(command)
+  }
 }
 
 function createWindow() {
@@ -120,14 +161,10 @@ function createWindow() {
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
   } else {
-    // win.loadFile('dist/index.html')
     win.loadFile(path.join(RENDERER_DIST, 'index.html'))
   }
 }
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
@@ -136,8 +173,6 @@ app.on('window-all-closed', () => {
 })
 
 app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow()
   }
@@ -152,8 +187,87 @@ app.whenReady().then(() => {
     openAtLogin: true,
     path: app.getPath('exe'),
   })
+
+  // Start clipboard monitoring (Polling is more reliable in Electron)
+  let lastText = clipboard.readText()
+  setInterval(() => {
+    const currentText = clipboard.readText()
+    if (currentText && currentText !== lastText) {
+      lastText = currentText
+      
+      const history = store.get('history') as ClipboardItem[]
+      // Avoid duplicates at the top (extra check)
+      if (history.length > 0 && history[0].content === currentText) return
+
+      const newItem: ClipboardItem = {
+        id: uuidv4(),
+        content: currentText,
+        timestamp: Date.now(),
+        isStarred: false,
+      }
+
+      const updatedHistory = [newItem, ...history].slice(0, 100)
+      store.set('history', updatedHistory)
+      
+      // Notify renderer
+      win?.webContents.send('history:updated', updatedHistory)
+    }
+  }, 500)
+
+  // Enable Hotkey
+  registerHotkey()
 })
 
 ipcMain.on('hide-window', () => {
   win?.hide()
+})
+
+ipcMain.handle('history:get', () => {
+  return store.get('history')
+})
+
+ipcMain.handle('history:remove', (_, id: string) => {
+  const history = store.get('history') as ClipboardItem[]
+  const updatedHistory = history.filter(item => item.id !== id)
+  store.set('history', updatedHistory)
+  return updatedHistory
+})
+
+ipcMain.handle('history:toggle-star', (_, id: string) => {
+  const history = store.get('history') as ClipboardItem[]
+  const updatedHistory = history.map(item => 
+    item.id === id ? { ...item, isStarred: !item.isStarred } : item
+  )
+  store.set('history', updatedHistory)
+  return updatedHistory
+})
+
+ipcMain.handle('history:search', (_, query: string) => {
+  const history = store.get('history') as ClipboardItem[]
+  if (!query) return history
+  const lowerQuery = query.toLowerCase()
+  return history.filter(item => item.content.toLowerCase().includes(lowerQuery))
+})
+
+ipcMain.handle('settings:get', () => {
+  return store.get('settings')
+})
+
+ipcMain.handle('settings:update', (_, newSettings: any) => {
+  store.set('settings', newSettings)
+  registerHotkey() // Re-register in case hotkey changed
+  return newSettings
+})
+
+ipcMain.on('clipboard:paste-item', (event, content: string) => {
+  clipboard.writeText(content)
+  win?.hide()
+  
+  const settings = store.get('settings') as any
+  if (settings.instantPaste) {
+    // Small delay to let focus return to the previous application
+    setTimeout(() => {
+      simulatePaste()
+    }, 150)
+  }
 })
