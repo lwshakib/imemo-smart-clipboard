@@ -6,6 +6,7 @@ import { Icon } from "@iconify/react"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Logo } from "@/components/logo"
 import { Download, ChevronLeft, Laptop, Monitor, Terminal } from "lucide-react"
+import { DOWNLOAD_URLS } from "@/lib/constants"
 
 type OS = "windows" | "macos" | "linux" | "unknown"
 
@@ -34,6 +35,15 @@ export default function DownloadPage() {
       case "macos": return "logos:apple"
       case "linux": return "logos:linux-tux"
       default: return "solar:laptop-linear"
+    }
+  }
+
+  const getDownloadUrl = (os: OS) => {
+    switch (os) {
+      case "windows": return DOWNLOAD_URLS.WINDOWS
+      case "macos": return DOWNLOAD_URLS.MAC
+      case "linux": return DOWNLOAD_URLS.LINUX
+      default: return "#"
     }
   }
 
@@ -73,16 +83,19 @@ export default function DownloadPage() {
           </p>
 
           {/* Minimalist Download Button */}
-          <button className="group relative flex items-center gap-3 bg-zinc-50 hover:bg-zinc-200 text-zinc-950 px-8 py-4 rounded-full transition-all duration-300 transform active:scale-95">
+          <a 
+            href={getDownloadUrl(detectedOS)}
+            className="group relative flex items-center gap-3 bg-zinc-50 hover:bg-zinc-200 text-zinc-950 px-8 py-4 rounded-full transition-all duration-300 transform active:scale-95 cursor-pointer"
+          >
             <Download size={18} className="group-hover:translate-y-0.5 transition-transform" />
             <div className="flex flex-col items-start leading-none">
               <span className="text-[10px] font-bold tracking-wider opacity-60 mb-1">Download for</span>
               <span className="text-sm font-semibold">{getOSName(detectedOS)}</span>
             </div>
-          </button>
+          </a>
           
           <div className="mt-8 flex items-center gap-6 text-[10px] tracking-widest text-zinc-600 font-bold">
-            <span>v0.0.1</span>
+            <span>v0.1.0</span>
             <span className="w-1 h-1 rounded-full bg-zinc-800" />
             <span>Open Source</span>
             <span className="w-1 h-1 rounded-full bg-zinc-800" />
@@ -110,10 +123,13 @@ export default function DownloadPage() {
               <p className="text-[11px] text-zinc-500 mb-8 leading-relaxed px-4">
                 Full support for Windows 10 & 11.<br />Installer available for x64.
               </p>
-              <button className="mt-auto w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-zinc-900 border border-white/5 text-zinc-400 text-xs font-medium hover:bg-zinc-50 hover:text-zinc-950 transition-all">
+              <a 
+                href={DOWNLOAD_URLS.WINDOWS}
+                className="mt-auto w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-zinc-900 border border-white/5 text-zinc-400 text-xs font-medium hover:bg-zinc-50 hover:text-zinc-950 transition-all"
+              >
                 <Download size={14} />
                 Download for Windows
-              </button>
+              </a>
             </div>
 
             {/* macOS Card */}
@@ -125,10 +141,13 @@ export default function DownloadPage() {
               <p className="text-[11px] text-zinc-500 mb-8 leading-relaxed px-4">
                 Optimized for Apple Silicon.<br />Works on Intel-based Macs.
               </p>
-              <button className="mt-auto w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-zinc-900 border border-white/5 text-zinc-400 text-xs font-medium hover:bg-zinc-50 hover:text-zinc-950 transition-all">
+              <a 
+                href={DOWNLOAD_URLS.MAC}
+                className="mt-auto w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-zinc-900 border border-white/5 text-zinc-400 text-xs font-medium hover:bg-zinc-50 hover:text-zinc-950 transition-all"
+              >
                 <Download size={14} />
                 Download for macOS
-              </button>
+              </a>
             </div>
 
             {/* Linux Card */}
@@ -141,10 +160,13 @@ export default function DownloadPage() {
                 Universal AppImage support.<br />Debian and RPM packages.
               </p>
               <div className="mt-auto w-full flex flex-col gap-2">
-                <button className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-zinc-900 border border-white/5 text-zinc-400 text-xs font-medium hover:bg-zinc-50 hover:text-zinc-950 transition-all">
+                <a 
+                  href={DOWNLOAD_URLS.LINUX}
+                  className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-zinc-900 border border-white/5 text-zinc-400 text-xs font-medium hover:bg-zinc-50 hover:text-zinc-950 transition-all"
+                >
                   <Download size={14} />
                   Download for Linux
-                </button>
+                </a>
                 <div className="flex gap-2">
                   <button className="flex-1 py-1.5 rounded-lg bg-zinc-950 border border-white/5 text-[9px] text-zinc-600 hover:text-zinc-400 transition-colors font-bold tracking-tighter">.deb</button>
                   <button className="flex-1 py-1.5 rounded-lg bg-zinc-950 border border-white/5 text-[9px] text-zinc-600 hover:text-zinc-400 transition-colors font-bold tracking-tighter">.rpm</button>
@@ -208,7 +230,7 @@ export default function DownloadPage() {
             <div>
               <h4 className="text-xs font-bold text-zinc-100 tracking-widest mb-6">Connect</h4>
               <ul className="space-y-4">
-                <li><Link href="#" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors flex items-center gap-2">
+                <li><Link href="https://github.com/lwshakib/imemo-smart-clipboard" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors flex items-center gap-2">
                   <Icon icon="lucide:github" width={14} /> GitHub
                 </Link></li>
                 <li><Link href="#" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors flex items-center gap-2">

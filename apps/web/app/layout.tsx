@@ -17,8 +17,17 @@ const fontMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Launchoria | AI Client Acquisition for Accounting Firms",
-  description: "Add $50K-$100K in Annual Revenue on autopilot with our AI-driven client acquisition system for accounting firms.",
+  title: "iMemo | Smart Clipboard Companion",
+  description: "The ultimate companion for your desktop clipboard. Designed for developers, writers, and power users who value speed and privacy.",
+  icons: {
+    icon: [
+      { url: "/favicon_io/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon_io/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon_io/favicon.ico" }
+    ],
+    apple: "/favicon_io/apple-touch-icon.png",
+  },
+  manifest: "/favicon_io/site.webmanifest",
 }
 
 export default function RootLayout({

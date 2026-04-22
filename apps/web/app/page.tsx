@@ -232,7 +232,7 @@ export default function Page() {
             <div>
               <h4 className="text-xs font-bold text-zinc-100 tracking-widest mb-6">Connect</h4>
               <ul className="space-y-4">
-                <li><Link href="#" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors flex items-center gap-2">
+                <li><Link href="https://github.com/lwshakib/imemo-smart-clipboard" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors flex items-center gap-2">
                   <Icon icon="lucide:github" width={14} /> GitHub
                 </Link></li>
                 <li><Link href="#" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors flex items-center gap-2">
