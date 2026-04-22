@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, nativeImage, Tray, screen, ipcMain, clipboard, globalShortcut, Notification } from 'electron'
+import { app, BrowserWindow, Menu, nativeImage, Tray, screen, ipcMain, clipboard, globalShortcut, Notification, nativeTheme } from 'electron'
 import { v4 as uuidv4 } from 'uuid'
 import Store from 'electron-store'
 import { fileURLToPath } from 'node:url'
@@ -187,6 +187,7 @@ function createWindow() {
     alwaysOnTop: true,
     skipTaskbar: true,
     show: false,
+    backgroundColor: '#09090b',
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
     },
@@ -236,6 +237,7 @@ function createPreviewWindow(id: string, content: string, isManual: boolean) {
     show: false,
     skipTaskbar: true,
     transparent: true,
+    backgroundColor: '#00000000',
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
     },
@@ -292,6 +294,9 @@ app.whenReady().then(() => {
 
   // Initialize launch at startup based on settings
   const settings = store.get('settings') as Settings
+  
+  // Set initial theme for Electron system UI
+  nativeTheme.themeSource = settings.theme || 'system'
   app.setLoginItemSettings({
     openAtLogin: settings.startOnStartup,
     path: app.getPath('exe'),
@@ -421,6 +426,9 @@ ipcMain.handle('settings:update', (_event, newSettings: Settings) => {
   }
 
   registerHotkey() // Re-register in case hotkey changed
+  
+  // Update Electron's native theme source
+  nativeTheme.themeSource = newSettings.theme || 'system'
   
   // Notify renderer about the update (for theme switching, etc)
   win?.webContents.send('settings:updated', newSettings)

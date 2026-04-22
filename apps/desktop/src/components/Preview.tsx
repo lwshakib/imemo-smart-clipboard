@@ -61,7 +61,7 @@ const Preview: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-white/98 dark:bg-zinc-900/98 shadow-2xl backdrop-blur-xl text-zinc-900 dark:text-white border border-zinc-200 dark:border-white/10">
+    <div className="flex h-screen w-screen flex-col overflow-hidden bg-white dark:bg-zinc-950 shadow-2xl text-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-white/10">
       {/* Draggable Header */}
       <div className="flex items-center justify-between px-4 py-2 bg-zinc-50 dark:bg-white/5 cursor-move drag border-b border-zinc-200 dark:border-white/5">
         <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Preview</span>
@@ -84,7 +84,7 @@ const Preview: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 pb-2 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800 scrollbar-track-transparent select-text no-drag">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 pb-2 select-text no-drag">
         {content === null ? (
           <div className="flex items-center justify-center h-full text-zinc-600 text-xs animate-pulse">
             Loading preview...
@@ -93,8 +93,16 @@ const Preview: React.FC = () => {
           <div className="flex items-center justify-center h-full text-zinc-600 text-xs italic">
             No content to display
           </div>
+        ) : content.startsWith('data:image/') ? (
+          <div className="flex items-center justify-center h-full w-full">
+            <img 
+              src={content} 
+              alt="Preview" 
+              className="max-w-full max-h-full object-contain rounded shadow-sm" 
+            />
+          </div>
         ) : (
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 selection:bg-sky-500/30">
+          <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 selection:bg-sky-500/30 min-h-full">
             {content}
           </p>
         )}
