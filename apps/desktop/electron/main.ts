@@ -281,9 +281,10 @@ app.whenReady().then(() => {
   createWindow()
   createTray()
 
-  // Enable launch at startup
+  // Initialize launch at startup based on settings
+  const settings = store.get('settings') as any
   app.setLoginItemSettings({
-    openAtLogin: true,
+    openAtLogin: settings.startOnStartup,
     path: app.getPath('exe'),
   })
 
