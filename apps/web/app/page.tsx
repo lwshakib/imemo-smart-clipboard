@@ -201,7 +201,7 @@ export default function Page() {
               Download for Free
             </Link>
           </div>
-          <p className="text-xs text-zinc-500 mt-6 font-medium uppercase tracking-widest">
+          <p className="text-xs text-zinc-500 mt-6 font-medium tracking-widest">
             Lightweight • Fast • Open Source
           </p>
         </div>

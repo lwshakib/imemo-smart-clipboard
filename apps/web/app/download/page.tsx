@@ -42,7 +42,7 @@ export default function DownloadPage() {
       {/* Minimalist Navigation */}
       <nav className="fixed top-0 w-full bg-zinc-950/70 backdrop-blur-xl z-50 border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="font-medium text-lg tracking-tighter text-zinc-50 uppercase flex items-center gap-3">
+          <Link href="/" className="font-medium text-lg tracking-tighter text-zinc-50 flex items-center gap-3">
             <Logo size={28} />
             iMemo
           </Link>
@@ -76,12 +76,12 @@ export default function DownloadPage() {
           <button className="group relative flex items-center gap-3 bg-zinc-50 hover:bg-zinc-200 text-zinc-950 px-8 py-4 rounded-full transition-all duration-300 transform active:scale-95">
             <Download size={18} className="group-hover:translate-y-0.5 transition-transform" />
             <div className="flex flex-col items-start leading-none">
-              <span className="text-[10px] font-bold uppercase tracking-wider opacity-60 mb-1">Download for</span>
+              <span className="text-[10px] font-bold tracking-wider opacity-60 mb-1">Download for</span>
               <span className="text-sm font-semibold">{getOSName(detectedOS)}</span>
             </div>
           </button>
           
-          <div className="mt-8 flex items-center gap-6 text-[10px] uppercase tracking-widest text-zinc-600 font-bold">
+          <div className="mt-8 flex items-center gap-6 text-[10px] tracking-widest text-zinc-600 font-bold">
             <span>v0.0.1</span>
             <span className="w-1 h-1 rounded-full bg-zinc-800" />
             <span>Open Source</span>
@@ -146,8 +146,8 @@ export default function DownloadPage() {
                   Download for Linux
                 </button>
                 <div className="flex gap-2">
-                  <button className="flex-1 py-1.5 rounded-lg bg-zinc-950 border border-white/5 text-[9px] text-zinc-600 hover:text-zinc-400 transition-colors uppercase font-bold tracking-tighter">.deb</button>
-                  <button className="flex-1 py-1.5 rounded-lg bg-zinc-950 border border-white/5 text-[9px] text-zinc-600 hover:text-zinc-400 transition-colors uppercase font-bold tracking-tighter">.rpm</button>
+                  <button className="flex-1 py-1.5 rounded-lg bg-zinc-950 border border-white/5 text-[9px] text-zinc-600 hover:text-zinc-400 transition-colors font-bold tracking-tighter">.deb</button>
+                  <button className="flex-1 py-1.5 rounded-lg bg-zinc-950 border border-white/5 text-[9px] text-zinc-600 hover:text-zinc-400 transition-colors font-bold tracking-tighter">.rpm</button>
                 </div>
               </div>
             </div>
@@ -187,7 +187,7 @@ export default function DownloadPage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-20">
             <div className="col-span-2">
-              <div className="font-medium text-lg tracking-tighter text-zinc-50 uppercase flex items-center gap-3 mb-6">
+              <div className="font-medium text-lg tracking-tighter text-zinc-50 flex items-center gap-3 mb-6">
                 <Logo size={28} />
                 iMemo
               </div>
@@ -197,7 +197,7 @@ export default function DownloadPage() {
             </div>
             
             <div>
-              <h4 className="text-xs font-bold text-zinc-100 uppercase tracking-widest mb-6">Product</h4>
+              <h4 className="text-xs font-bold text-zinc-100 tracking-widest mb-6">Product</h4>
               <ul className="space-y-4">
                 <li><Link href="/#features" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors">Features</Link></li>
                 <li><Link href="/download" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors">Download</Link></li>
@@ -206,7 +206,7 @@ export default function DownloadPage() {
             </div>
 
             <div>
-              <h4 className="text-xs font-bold text-zinc-100 uppercase tracking-widest mb-6">Connect</h4>
+              <h4 className="text-xs font-bold text-zinc-100 tracking-widest mb-6">Connect</h4>
               <ul className="space-y-4">
                 <li><Link href="#" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors flex items-center gap-2">
                   <Icon icon="lucide:github" width={14} /> GitHub
