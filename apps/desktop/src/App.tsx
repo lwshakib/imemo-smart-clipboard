@@ -5,8 +5,17 @@ import StarredView from './components/StarredView'
 import SearchView from './components/SearchView'
 import SettingsView from './components/SettingsView'
 
+import Preview from './components/Preview'
+
 function App() {
   const [activeTab, setActiveTab] = useState<TabId>('history')
+
+  // Simple routing for preview mode
+  const isPreviewMode = window.location.search.includes('mode=preview')
+
+  if (isPreviewMode) {
+    return <Preview />
+  }
 
   const renderView = () => {
     switch (activeTab) {

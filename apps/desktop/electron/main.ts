@@ -59,6 +59,7 @@ const store = new Store({
 })
 
 let win: BrowserWindow | null
+let previewWin: BrowserWindow | null = null
 let tray: Tray | null = null
 
 const WINDOW_WIDTH = 400
@@ -192,6 +193,40 @@ function createWindow() {
   } else {
     win.loadFile(path.join(RENDERER_DIST, 'index.html'))
   }
+}
+
+function createPreviewWindow(initialContent?: string) {
+  if (previewWin) return
+
+  previewWin = new BrowserWindow({
+    width: 500,
+    height: 400,
+    frame: false,
+    resizable: false,
+    alwaysOnTop: true,
+    show: false,
+    skipTaskbar: true,
+    transparent: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.mjs'),
+    },
+  })
+
+  if (VITE_DEV_SERVER_URL) {
+    previewWin.loadURL(`${VITE_DEV_SERVER_URL}?mode=preview`)
+  } else {
+    previewWin.loadFile(path.join(RENDERER_DIST, 'index.html'), { query: { mode: 'preview' } })
+  }
+
+  previewWin.webContents.on('did-finish-load', () => {
+    if (initialContent) {
+      previewWin?.webContents.send('preview:content', initialContent)
+    }
+  })
+
+  previewWin.on('closed', () => {
+    previewWin = null
+  })
 }
 
 app.on('window-all-closed', () => {
@@ -353,6 +388,7 @@ ipcMain.on('clipboard:paste-item', (_event, item: { content: string, type: 'text
   }
   
   win?.hide()
+  previewWin?.hide()
   
   const settings = store.get('settings') as any
   if (settings.instantPaste) {
@@ -361,4 +397,31 @@ ipcMain.on('clipboard:paste-item', (_event, item: { content: string, type: 'text
       simulatePaste()
     }, 150)
   }
+})
+
+ipcMain.on('preview:show', (_event, content: string) => {
+  if (!previewWin) {
+    createPreviewWindow(content)
+  }
+
+  if (previewWin && win) {
+    const primaryDisplay = screen.getPrimaryDisplay()
+    const { width: screenWidth, height: screenHeight, x: screenX, y: screenY } = primaryDisplay.workArea
+    
+    const previewWidth = 500
+    const previewHeight = 400
+    
+    // Position directly ABOVE the main window at the bottom right corner
+    const x = screenX + screenWidth - previewWidth
+    const mainWinY = screenY + screenHeight - WINDOW_HEIGHT
+    const y = mainWinY - previewHeight - 10 // 10px gap
+    
+    previewWin.setPosition(x, y)
+    previewWin.webContents.send('preview:content', content)
+    previewWin.showInactive() // Show without taking focus
+  }
+})
+
+ipcMain.on('preview:hide', () => {
+  previewWin?.hide()
 })

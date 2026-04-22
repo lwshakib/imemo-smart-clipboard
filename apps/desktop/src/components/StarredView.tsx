@@ -102,6 +102,24 @@ const StarredView: React.FC = () => {
     return `${diff} mins ago`;
   };
 
+  const hoverTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = (item: ClipboardItem) => {
+    if (item.type === 'image') return;
+    
+    hoverTimer.current = setTimeout(() => {
+      window.ipcRenderer.send('preview:show', item.content);
+    }, 800);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimer.current) {
+      clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
+    window.ipcRenderer.send('preview:hide');
+  };
+
   return (
     <div className="flex flex-col p-4 animate-in fade-in slide-in-from-bottom-2 duration-500 min-h-screen">
       {items.length === 0 && !isLoading ? (
@@ -120,6 +138,8 @@ const StarredView: React.FC = () => {
             <div 
               key={item.id} 
               onClick={() => handleItemClick(item)}
+              onMouseEnter={() => handleMouseEnter(item)}
+              onMouseLeave={handleMouseLeave}
               className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/5 bg-zinc-900/50 p-4 transition-all hover:bg-zinc-800/80 active:scale-[0.98]"
             >
               {item.type === 'image' ? (

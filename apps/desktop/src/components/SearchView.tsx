@@ -90,10 +90,31 @@ const SearchView: React.FC = () => {
     ));
   };
 
+  const hoverTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = (item: ClipboardItem) => {
+    if (item.type === 'image') return;
+    
+    hoverTimer.current = setTimeout(() => {
+      window.ipcRenderer.send('preview:show', item.content);
+    }, 800);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimer.current) {
+      clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
+    window.ipcRenderer.send('preview:hide');
+  };
+
   const formatTime = (timestamp: number) => {
     const diff = Math.floor((Date.now() - timestamp) / 60000);
     if (diff < 1) return 'Just now';
-    return `${diff} mins ago`;
+    if (diff < 60) return `${diff} mins ago`;
+    const hours = Math.floor(diff / 60);
+    if (hours < 24) return `${hours} hours ago`;
+    return new Date(timestamp).toLocaleDateString();
   };
 
   return (
@@ -121,6 +142,8 @@ const SearchView: React.FC = () => {
               <div 
                 key={item.id} 
                 onClick={() => handleItemClick(item)}
+                onMouseEnter={() => handleMouseEnter(item)}
+                onMouseLeave={handleMouseLeave}
                 className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/5 bg-zinc-900/50 p-4 transition-all hover:bg-zinc-800/80 active:scale-[0.98]"
               >
                 {item.type === 'image' ? (
