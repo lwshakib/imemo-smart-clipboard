@@ -197,7 +197,7 @@ const SettingsView: React.FC = () => {
       </div>
 
       <div className="mt-8 pt-6 border-t border-zinc-200 dark:border-white/5">
-        <p className="text-[10px] text-center text-zinc-500 dark:text-zinc-600">iMemo Smart Clipboard v0.0.1</p>
+        <p className="text-[10px] text-center text-zinc-500 dark:text-zinc-600">iMemo Smart Clipboard v{__APP_VERSION__}</p>
       </div>
     </div>
   );
