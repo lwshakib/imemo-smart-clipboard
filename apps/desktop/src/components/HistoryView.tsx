@@ -163,7 +163,7 @@ const HistoryView: React.FC = () => {
   return (
     <div className="flex flex-col p-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
       {items.length === 0 && !isLoading ? (
-        <div className="flex flex-col items-center justify-center p-10 text-center text-zinc-500">
+        <div className="flex flex-col items-center justify-center p-10 text-center text-zinc-400 dark:text-zinc-500">
           <p className="text-sm">History is empty</p>
           <p className="text-[10px] mt-1">Copied text and images will appear here</p>
         </div>
@@ -176,10 +176,10 @@ const HistoryView: React.FC = () => {
               onMouseEnter={() => handleMouseEnter(item)}
               onMouseMove={() => handleMouseMove(item)}
               onMouseLeave={() => handleMouseLeave(item)}
-              className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/5 bg-zinc-900/50 p-4 transition-all hover:bg-zinc-800/80 active:scale-[0.98]"
+              className="group relative cursor-pointer overflow-hidden rounded-xl border border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-zinc-900/50 p-4 transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800/80 active:scale-[0.98]"
             >
               {item.type === 'image' ? (
-                <div className="mb-2 max-h-40 overflow-hidden rounded-lg bg-zinc-800">
+                <div className="mb-2 max-h-40 overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
                   <img 
                     src={item.content} 
                     alt="Clipboard item" 
@@ -187,17 +187,17 @@ const HistoryView: React.FC = () => {
                   />
                 </div>
               ) : (
-                <p className="text-sm text-zinc-300 line-clamp-1">{item.content}</p>
+                <p className="text-sm text-zinc-700 dark:text-zinc-300 line-clamp-1">{item.content}</p>
               )}
               
               <div className="mt-2 flex items-center justify-between">
-                <span className="text-[10px] text-zinc-500 font-medium">{formatTime(item.timestamp)}</span>
+                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">{formatTime(item.timestamp)}</span>
                 
                 <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                   {item.type !== 'image' && (
                     <button 
                       onClick={(e) => handleOpenPreview(e, item)}
-                      className="text-zinc-500 hover:text-zinc-300 transition-colors"
+                      className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
                       title="Preview"
                     >
                       <Maximize2 size={14} />
@@ -205,13 +205,13 @@ const HistoryView: React.FC = () => {
                   )}
                   <button 
                     onClick={(e) => handleToggleStar(e, item.id)}
-                    className={`transition-colors ${item.isStarred ? 'text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    className={`transition-colors ${item.isStarred ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300'}`}
                   >
                     <Star size={14} fill={item.isStarred ? "currentColor" : "none"} />
                   </button>
                   <button 
                     onClick={(e) => handleRemove(e, item.id)}
-                    className="text-zinc-500 hover:text-zinc-300 transition-colors"
+                    className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -227,8 +227,8 @@ const HistoryView: React.FC = () => {
             </div>
           ) : items.length > 0 ? (
             <div className="pt-10 pb-20 flex flex-col items-center justify-center text-center">
-              <div className="h-[1px] w-12 bg-zinc-800 mb-4" />
-              <p className="text-[10px] font-medium text-zinc-600">
+              <div className="h-[1px] w-12 bg-zinc-200 dark:bg-zinc-800 mb-4" />
+              <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-600">
                 End of history
               </p>
             </div>

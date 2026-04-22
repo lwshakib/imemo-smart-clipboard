@@ -51,6 +51,7 @@ interface Settings {
   globalHotkey: string
   startOnStartup: boolean
   showNotifications: boolean
+  theme: 'light' | 'dark' | 'system'
 }
 
 const store = new Store({
@@ -60,7 +61,8 @@ const store = new Store({
       instantPaste: true,
       globalHotkey: 'Alt+V',
       startOnStartup: true,
-      showNotifications: true
+      showNotifications: true,
+      theme: 'system'
     } as Settings
   }
 })
@@ -419,6 +421,10 @@ ipcMain.handle('settings:update', (_event, newSettings: Settings) => {
   }
 
   registerHotkey() // Re-register in case hotkey changed
+  
+  // Notify renderer about the update (for theme switching, etc)
+  win?.webContents.send('settings:updated', newSettings)
+  
   return newSettings
 })
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navbar, { TabId } from './components/Navbar'
 import HistoryView from './components/HistoryView'
 import StarredView from './components/StarredView'
@@ -9,15 +9,42 @@ import Preview from './components/Preview'
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabId>('history')
-
-  // Simple routing for preview mode
   const isPreviewMode = window.location.search.includes('mode=preview')
 
-  if (isPreviewMode) {
-    return <Preview />
-  }
+  useEffect(() => {
+    const fetchTheme = async () => {
+      const s = await window.ipcRenderer.invoke('settings:get');
+      if (s?.theme) applyTheme(s.theme);
+    };
+    fetchTheme();
+
+    const listener = (_event: any, newSettings: any) => {
+      if (newSettings?.theme) {
+        applyTheme(newSettings.theme);
+      }
+    };
+    
+    window.ipcRenderer.on('settings:updated', listener);
+    return () => {
+      window.ipcRenderer.off('settings:updated', listener);
+    };
+  }, []);
+
+  const applyTheme = (theme: 'light' | 'dark' | 'system') => {
+    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    }
+  };
+
 
   const renderView = () => {
+    if (isPreviewMode) return <Preview />
+    
     switch (activeTab) {
       case 'history':
         return <HistoryView />
@@ -33,17 +60,18 @@ function App() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-950 font-sans text-white">
-      <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
+    <div className="flex min-h-screen flex-col bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 font-sans transition-colors duration-300">
+      {!isPreviewMode && <Navbar activeTab={activeTab} onTabChange={setActiveTab} />}
       
       <main className="flex-1 overflow-y-auto no-drag">
-        <div className="mx-auto h-full max-w-lg">
+        <div className={isPreviewMode ? "h-full" : "mx-auto h-full max-w-lg"}>
           {renderView()}
         </div>
       </main>
       
-      {/* Subtle overlay/gradient at the bottom for smooth scroll fading */}
-      <div className="pointer-events-none fixed bottom-0 left-0 h-12 w-full bg-gradient-to-t from-zinc-950 to-transparent opacity-60" />
+      {!isPreviewMode && (
+        <div className="pointer-events-none fixed bottom-0 left-0 h-12 w-full bg-gradient-to-t from-white dark:from-zinc-950 to-transparent opacity-60" />
+      )}
     </div>
   )
 }
