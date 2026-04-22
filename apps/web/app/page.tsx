@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Icon } from "@iconify/react"
 import { ModeToggle } from "@/components/mode-toggle"
+import { Logo } from "@/components/logo"
 import { Download, Zap, History, Keyboard, Shield, Star, Image as ImageIcon, Search } from "lucide-react"
 
 export default function Page() {
@@ -11,10 +12,8 @@ export default function Page() {
       {/* Minimalist Navigation */}
       <nav className="fixed top-0 w-full bg-zinc-950/70 backdrop-blur-xl z-50 border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="font-medium text-lg tracking-tighter text-zinc-50 uppercase flex items-center gap-2">
-            <div className="w-6 h-6 bg-zinc-50 rounded-lg flex items-center justify-center">
-              <div className="w-3 h-3 bg-zinc-950 rounded-sm rotate-45" />
-            </div>
+          <div className="font-medium text-lg tracking-tighter text-zinc-50 flex items-center gap-3">
+            <Logo size={28} />
             iMemo
           </div>
           <div className="flex items-center gap-4">
@@ -193,22 +192,72 @@ export default function Page() {
           <h2 className="text-4xl md:text-5xl font-medium tracking-tighter text-zinc-50 mb-6">Boost your productivity today.</h2>
           <p className="text-base text-zinc-400 mb-10">Download iMemo Smart Clipboard and transform how you work with data.</p>
           
-          <Link 
-            href="/download" 
-            className="inline-block text-sm font-medium text-zinc-950 bg-zinc-50 hover:bg-zinc-200 transition-all px-10 py-4 rounded-full text-center flex items-center gap-2 mx-auto"
-          >
-            <Download size={18} />
-            Download for Free
-          </Link>
-          <p className="text-xs text-zinc-500 mt-6">
-            Lightweight. Fast. Open source.
+          <div className="flex justify-center">
+            <Link 
+              href="/download" 
+              className="inline-flex items-center gap-2 text-sm font-medium text-zinc-950 bg-zinc-50 hover:bg-zinc-200 transition-all px-10 py-4 rounded-full text-center"
+            >
+              <Download size={18} />
+              Download for Free
+            </Link>
+          </div>
+          <p className="text-xs text-zinc-500 mt-6 font-medium uppercase tracking-widest">
+            Lightweight • Fast • Open Source
           </p>
         </div>
       </section>
 
-      <footer className="py-8 border-t border-white/5 text-center bg-zinc-950">
-        <div className="text-xs text-zinc-600">
-          © {new Date().getFullYear()} iMemo. All rights reserved.
+      <footer className="pt-24 pb-12 border-t border-white/5 bg-zinc-950 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-20">
+            <div className="col-span-2">
+              <div className="font-medium text-lg tracking-tighter text-zinc-50 flex items-center gap-3 mb-6">
+                <Logo size={28} />
+                iMemo
+              </div>
+              <p className="text-sm text-zinc-500 max-w-xs leading-relaxed">
+                The ultimate companion for your desktop clipboard. Designed for developers, writers, and power users who value speed and privacy.
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="text-xs font-bold text-zinc-100 tracking-widest mb-6">Product</h4>
+              <ul className="space-y-4">
+                <li><Link href="#features" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors">Features</Link></li>
+                <li><Link href="/download" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors">Download</Link></li>
+                <li><Link href="#" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors">Release Notes</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-xs font-bold text-zinc-100 tracking-widest mb-6">Connect</h4>
+              <ul className="space-y-4">
+                <li><Link href="#" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors flex items-center gap-2">
+                  <Icon icon="lucide:github" width={14} /> GitHub
+                </Link></li>
+                <li><Link href="#" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors flex items-center gap-2">
+                  <Icon icon="lucide:twitter" width={14} /> Twitter
+                </Link></li>
+                <li><Link href="#" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors flex items-center gap-2">
+                  <Icon icon="lucide:mail" width={14} /> Support
+                </Link></li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="text-[11px] text-zinc-600 font-medium">
+              © {new Date().getFullYear()} iMemo Smart Clipboard. All rights reserved.
+            </div>
+            <div className="flex items-center gap-8">
+              <Link href="#" className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors">Privacy Policy</Link>
+              <Link href="#" className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors">Terms of Service</Link>
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">All systems operational</span>
+              </div>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
