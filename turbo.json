@@ -19,6 +19,10 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "release": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"]
     }
   }
 }
