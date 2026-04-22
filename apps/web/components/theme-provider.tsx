@@ -5,14 +5,13 @@ import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes"
 
 // Since we've deduped types via tsconfig, we can now safely use React.Node/React.ComponentProps
 // We explicitely define children to assist with the React 19 transition requirements.
-interface ThemeProviderProps extends React.ComponentProps<typeof NextThemesProvider> {
+interface ThemeProviderProps extends React.ComponentProps<
+  typeof NextThemesProvider
+> {
   children: React.ReactNode
 }
 
-export function ThemeProvider({
-  children,
-  ...props
-}: ThemeProviderProps) {
+export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return (
     <NextThemesProvider
       attribute="class"

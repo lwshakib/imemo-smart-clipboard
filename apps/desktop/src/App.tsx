@@ -18,7 +18,7 @@ function App() {
     };
     fetchTheme();
 
-    const listener = (_event: any, newSettings: any) => {
+    const listener = (_event: Electron.IpcRendererEvent, newSettings: { theme?: 'light' | 'dark' | 'system' }) => {
       if (newSettings?.theme) {
         applyTheme(newSettings.theme);
       }
