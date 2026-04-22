@@ -13,17 +13,38 @@ const Preview: React.FC = () => {
     const isManualParam = params.get('isManual') === 'true';
     setId(windowId);
 
+    const fetchInitialContent = async () => {
+      try {
+        const initial = await window.ipcRenderer.invoke('preview:get-content', windowId);
+        if (initial) setContent(initial);
+      } catch (err) {
+        console.error('Failed to fetch initial content:', err);
+      }
+    };
+
+    fetchInitialContent();
+
     const listener = (_event: any, payload: { id: string, content: string }) => {
-      // Only update if the ID matches or if it's the hover window (no ID check needed for hover)
-      if (!windowId || payload.id === windowId) {
+      if (isManualParam) {
+        if (payload.id === windowId) {
+          setContent(payload.content);
+          setCopied(false);
+        }
+      } else {
         setContent(payload.content);
         setCopied(false);
       }
     };
 
+    const clearListener = () => {
+      if (!isManualParam) setContent(null);
+    };
+
     window.ipcRenderer.on('preview:content', listener);
+    window.ipcRenderer.on('preview:clear', clearListener);
     return () => {
       window.ipcRenderer.off('preview:content', listener);
+      window.ipcRenderer.off('preview:clear', clearListener);
     };
   }, []);
 

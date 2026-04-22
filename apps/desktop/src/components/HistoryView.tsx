@@ -105,13 +105,13 @@ const HistoryView: React.FC = () => {
   const isManualPreview = useRef(false);
 
   const handleMouseEnter = (item: ClipboardItem) => {
-    if (item.type === 'image') return;
+    if (item.type === 'image' || !item.content || item.content.trim() === '') return;
     
     hoverTimer.current = setTimeout(() => {
       if (!isManualPreview.current) {
         window.ipcRenderer.send('preview:show', { id: item.id, content: item.content, isManual: false });
       }
-    }, 400);
+    }, 1500);
   };
 
   const handleMouseLeave = (item: ClipboardItem) => {

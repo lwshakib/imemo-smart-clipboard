@@ -61,13 +61,15 @@ const store = new Store({
 let win: BrowserWindow | null
 const manualPreviewWins = new Map<string, BrowserWindow>()
 let hoverPreviewWin: BrowserWindow | null = null
-let currentPreviewContent: string = ''
+const contentCache = new Map<string, string>()
+let lastHoverContent: string = ''
 let tray: Tray | null = null
 
 const WINDOW_WIDTH = 400
 const WINDOW_HEIGHT = 600
 
 let lastBlurTime = 0
+let lastShowTime = 0
 
 function resetWindowPosition() {
   if (!win) return
@@ -96,7 +98,17 @@ function createTray() {
   tray.setContextMenu(contextMenu)
 
   tray.on('click', () => {
-    toggleWindow()
+    if (win?.isVisible()) {
+      win.hide()
+    } else {
+      lastShowTime = Date.now()
+      resetWindowPosition()
+      win?.show()
+      win?.focus()
+      // Ensure it's on top
+      win?.setAlwaysOnTop(true, 'screen-saver')
+      setTimeout(() => win?.setAlwaysOnTop(true), 100)
+    }
   })
 }
 
@@ -105,6 +117,7 @@ function toggleWindow() {
     win.hide()
   } else {
     if (Date.now() - lastBlurTime > 200) {
+      lastShowTime = Date.now()
       win?.show()
     }
   }
@@ -175,8 +188,11 @@ function createWindow() {
 
   // Hide when clicking away
   win.on('blur', () => {
-    lastBlurTime = Date.now()
-    win?.hide()
+    // Grace period to prevent hiding during tray click/focus transitions
+    if (Date.now() - lastShowTime > 300) {
+      lastBlurTime = Date.now()
+      win?.hide()
+    }
   })
 
   // Minimize to tray
@@ -215,6 +231,10 @@ function createPreviewWindow(id: string, content: string, isManual: boolean) {
       preload: path.join(__dirname, 'preload.mjs'),
     },
   })
+
+  if (!isManual) {
+    previewWin.setIgnoreMouseEvents(true)
+  }
 
   // Encode content and id into URL for the new window to pick up
   const query = new URLSearchParams({ 
@@ -403,7 +423,11 @@ ipcMain.on('clipboard:paste-item', (_event, item: { content: string, type: 'text
   }
   
   win?.hide()
-  previewWin?.hide()
+  
+  // Close all manual previews and hide the hover preview
+  manualPreviewWins.forEach(pWin => pWin.close())
+  manualPreviewWins.clear()
+  hoverPreviewWin?.hide()
   
   const settings = store.get('settings') as any
   if (settings.instantPaste) {
@@ -415,6 +439,9 @@ ipcMain.on('clipboard:paste-item', (_event, item: { content: string, type: 'text
 })
 
 ipcMain.on('preview:show', (_event, { id, content, isManual }: { id: string, content: string, isManual: boolean }) => {
+  contentCache.set(id, content)
+  if (!isManual) lastHoverContent = content
+  
   if (isManual) {
     // Hide hover window if it's open
     if (hoverPreviewWin) {
@@ -468,13 +495,13 @@ ipcMain.on('preview:hide', (_event, { id, isManual }: { id: string, isManual: bo
     manualPreviewWins.delete(id)
   } else {
     hoverPreviewWin?.hide()
+    hoverPreviewWin?.webContents.send('preview:clear')
   }
   
   win?.webContents.send('preview:hidden', id)
 })
 
 ipcMain.handle('preview:get-content', (_event, id: string) => {
-  // We can't easily find content by ID here without a global map
-  // But we send it via 'preview:content' on did-finish-load anyway
-  return null 
+  if (!id || id === 'null') return lastHoverContent
+  return contentCache.get(id) || null 
 })
