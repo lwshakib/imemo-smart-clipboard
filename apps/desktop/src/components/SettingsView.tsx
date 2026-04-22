@@ -20,12 +20,12 @@ const SettingsView: React.FC = () => {
     fetchSettings();
   }, []);
 
-  const updateSetting = async (key: keyof AppSettings, value: any) => {
+  const updateSetting = useCallback(async <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     if (!settings) return;
     const newSettings = { ...settings, [key]: value };
     const saved = await window.ipcRenderer.invoke('settings:update', newSettings);
     setSettings(saved);
-  };
+  }, [settings]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (!isRecording) return;
@@ -46,7 +46,7 @@ const SettingsView: React.FC = () => {
     
     updateSetting('globalHotkey', shortcut);
     setIsRecording(false);
-  }, [isRecording, settings]);
+  }, [isRecording, updateSetting]);
 
   useEffect(() => {
     if (isRecording) {

@@ -3,7 +3,6 @@ import { X, Copy, Check } from 'lucide-react';
 
 const Preview: React.FC = () => {
   const [content, setContent] = useState<string | null>(null);
-  const [id, setId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -11,7 +10,6 @@ const Preview: React.FC = () => {
     const params = new URLSearchParams(window.location.search);
     const windowId = params.get('id');
     const isManualParam = params.get('isManual') === 'true';
-    setId(windowId);
 
     const fetchInitialContent = async () => {
       try {
@@ -24,7 +22,7 @@ const Preview: React.FC = () => {
 
     fetchInitialContent();
 
-    const listener = (_event: any, payload: { id: string, content: string }) => {
+    const listener = (_: Electron.IpcRendererEvent, payload: { id: string, content: string }) => {
       if (isManualParam) {
         if (payload.id === windowId) {
           setContent(payload.content);

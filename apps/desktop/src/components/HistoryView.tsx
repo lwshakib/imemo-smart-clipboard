@@ -42,17 +42,17 @@ const HistoryView: React.FC = () => {
   useEffect(() => {
     fetchItems(true);
 
-    const listener = (_event: any, updatedHistory: ClipboardItem[]) => {
+    const listener = () => {
       // For real-time updates, we reset to the first page to show the newest item
-      setItems(updatedHistory.slice(0, PAGE_SIZE));
-      setHasMore(updatedHistory.length > PAGE_SIZE);
+      setItems(prevItems => prevItems.slice(0, PAGE_SIZE));
+      setHasMore(true);
     };
 
     window.ipcRenderer.on('history:updated', listener);
     return () => {
       window.ipcRenderer.off('history:updated', listener);
     };
-  }, []);
+  }, [fetchItems]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -64,13 +64,14 @@ const HistoryView: React.FC = () => {
       { threshold: 0.1 }
     );
 
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
     }
 
     return () => {
-      if (observerTarget.current) {
-        observer.unobserve(observerTarget.current);
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
       }
     };
   }, [fetchItems, hasMore, isLoading]);
@@ -133,7 +134,7 @@ const HistoryView: React.FC = () => {
 
   // Add a way to reset manual preview if the window is hidden from elsewhere
   useEffect(() => {
-    const listener = (_event: any, id: string) => {
+    const listener = () => {
       isManualPreview.current = false;
     };
     window.ipcRenderer.on('preview:hidden', listener);

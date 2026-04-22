@@ -252,10 +252,6 @@ export default function Page() {
             <div className="flex items-center gap-8">
               <Link href="#" className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors">Privacy Policy</Link>
               <Link href="#" className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors">Terms of Service</Link>
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">All systems operational</span>
-              </div>
             </div>
           </div>
         </div>

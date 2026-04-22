@@ -61,13 +61,14 @@ const SearchView: React.FC = () => {
       { threshold: 0.1 }
     );
 
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
     }
 
     return () => {
-      if (observerTarget.current) {
-        observer.unobserve(observerTarget.current);
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
       }
     };
   }, [fetchResults, hasMore, isLoading]);
@@ -121,7 +122,7 @@ const SearchView: React.FC = () => {
   };
 
   useEffect(() => {
-    const listener = (_event: any, id: string) => {
+    const listener = () => {
       isManualPreview.current = false;
     };
     window.ipcRenderer.on('preview:hidden', listener);
@@ -177,7 +178,7 @@ const SearchView: React.FC = () => {
                     />
                   </div>
                 ) : (
-                  <p className="text-sm text-zinc-300 line-clamp-3">{item.content}</p>
+                  <p className="text-sm text-zinc-300 line-clamp-1">{item.content}</p>
                 )}
                 
                 <div className="mt-2 flex items-center justify-between">

@@ -46,6 +46,13 @@ interface ClipboardItem {
   isStarred: boolean
 }
 
+interface Settings {
+  instantPaste: boolean
+  globalHotkey: string
+  startOnStartup: boolean
+  showNotifications: boolean
+}
+
 const store = new Store({
   defaults: {
     history: [] as ClipboardItem[],
@@ -54,7 +61,7 @@ const store = new Store({
       globalHotkey: 'Alt+V',
       startOnStartup: true,
       showNotifications: true
-    }
+    } as Settings
   }
 })
 
@@ -124,7 +131,7 @@ function toggleWindow() {
 }
 
 function registerHotkey() {
-  const settings = store.get('settings') as any
+  const settings = store.get('settings') as Settings
   const hotkey = settings.globalHotkey || 'Alt+V'
   
   globalShortcut.unregisterAll()
@@ -151,7 +158,7 @@ function simulatePaste() {
 }
 
 function showClipboardNotification(content: string) {
-  const settings = store.get('settings') as any
+  const settings = store.get('settings') as Settings
   if (!settings.showNotifications) return
 
   new Notification({
@@ -196,7 +203,7 @@ function createWindow() {
   })
 
   // Minimize to tray
-  win.on('minimize', (event: any) => {
+  win.on('minimize', (event: Electron.Event) => {
     event.preventDefault()
     win?.hide()
   })
@@ -282,7 +289,7 @@ app.whenReady().then(() => {
   createTray()
 
   // Initialize launch at startup based on settings
-  const settings = store.get('settings') as any
+  const settings = store.get('settings') as Settings
   app.setLoginItemSettings({
     openAtLogin: settings.startOnStartup,
     path: app.getPath('exe'),
@@ -357,7 +364,7 @@ ipcMain.on('hide-window', () => {
   win?.hide()
 })
 
-ipcMain.handle('history:get', (_, { offset = 0, limit = 20 } = {}) => {
+ipcMain.handle('history:get', (_event, { offset = 0, limit = 20 } = {}) => {
   const history = store.get('history') as ClipboardItem[]
   const items = history.slice(offset, offset + limit)
   return {
@@ -367,14 +374,14 @@ ipcMain.handle('history:get', (_, { offset = 0, limit = 20 } = {}) => {
   }
 })
 
-ipcMain.handle('history:remove', (_, id: string) => {
+ipcMain.handle('history:remove', (_event, id: string) => {
   const history = store.get('history') as ClipboardItem[]
   const updatedHistory = history.filter(item => item.id !== id)
   store.set('history', updatedHistory)
   return updatedHistory
 })
 
-ipcMain.handle('history:toggle-star', (_, id: string) => {
+ipcMain.handle('history:toggle-star', (_event, id: string) => {
   const history = store.get('history') as ClipboardItem[]
   const updatedHistory = history.map(item => 
     item.id === id ? { ...item, isStarred: !item.isStarred } : item
@@ -383,7 +390,7 @@ ipcMain.handle('history:toggle-star', (_, id: string) => {
   return updatedHistory
 })
 
-ipcMain.handle('history:search', (_, { query, offset = 0, limit = 20 }) => {
+ipcMain.handle('history:search', (_event, { query, offset = 0, limit = 20 }) => {
   const history = store.get('history') as ClipboardItem[]
   if (!query) return { items: history.slice(offset, offset + limit), total: history.length, hasMore: offset + limit < history.length }
   const lowerQuery = query.toLowerCase()
@@ -399,8 +406,8 @@ ipcMain.handle('settings:get', () => {
   return store.get('settings')
 })
 
-ipcMain.handle('settings:update', (_, newSettings: any) => {
-  const oldSettings = store.get('settings') as any
+ipcMain.handle('settings:update', (_event, newSettings: Settings) => {
+  const oldSettings = store.get('settings') as Settings
   store.set('settings', newSettings)
   
   // Handle start on startup change
@@ -430,7 +437,7 @@ ipcMain.on('clipboard:paste-item', (_event, item: { content: string, type: 'text
   manualPreviewWins.clear()
   hoverPreviewWin?.hide()
   
-  const settings = store.get('settings') as any
+  const settings = store.get('settings') as Settings
   if (settings.instantPaste) {
     // Small delay to let focus return to the previous application
     setTimeout(() => {

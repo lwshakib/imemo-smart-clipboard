@@ -47,17 +47,17 @@ const StarredView: React.FC = () => {
   useEffect(() => {
     fetchItems(true);
     
-    const listener = (_event: any, updatedHistory: ClipboardItem[]) => {
-      const starred = updatedHistory.filter(item => item.isStarred);
-      setItems(starred.slice(0, PAGE_SIZE));
-      setHasMore(starred.length > PAGE_SIZE);
+    const listener = () => {
+      // Since we don't have the full history here, we should probably just refetch or handle it differently
+      // But for consistency with HistoryView, let's at least try to keep it functional
+      fetchItems(true);
     };
 
     window.ipcRenderer.on('history:updated', listener);
     return () => {
       window.ipcRenderer.off('history:updated', listener);
     };
-  }, []);
+  }, [fetchItems]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -69,13 +69,14 @@ const StarredView: React.FC = () => {
       { threshold: 0.1 }
     );
 
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
     }
 
     return () => {
-      if (observerTarget.current) {
-        observer.unobserve(observerTarget.current);
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
       }
     };
   }, [fetchItems, hasMore, isLoading]);
@@ -133,7 +134,7 @@ const StarredView: React.FC = () => {
   };
 
   useEffect(() => {
-    const listener = (_event: any, id: string) => {
+    const listener = () => {
       isManualPreview.current = false;
     };
     window.ipcRenderer.on('preview:hidden', listener);
@@ -173,7 +174,7 @@ const StarredView: React.FC = () => {
                   />
                 </div>
               ) : (
-                <p className="text-sm text-zinc-300 line-clamp-3">{item.content}</p>
+                <p className="text-sm text-zinc-300 line-clamp-1">{item.content}</p>
               )}
               
               <div className="mt-2 flex items-center justify-between">
