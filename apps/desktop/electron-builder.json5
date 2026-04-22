@@ -45,5 +45,11 @@
     ],
     "category": "Utility",
     "artifactName": "${productName}-Linux-${version}.${ext}"
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "lwshakib",
+    "repo": "imemo-smart-clipboard",
+    "releaseType": "release"
   }
 }
