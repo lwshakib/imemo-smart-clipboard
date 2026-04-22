@@ -1,30 +1,41 @@
-# React + TypeScript + Vite
+<p align="left">
+  <img src="public/logo.svg" width="64" height="64" alt="iMemo Logo">
+</p>
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# iMemo Desktop
 
-Currently, two official plugins are available:
+This is the main desktop application for iMemo Smart Clipboard, built with Electron, React, Vite, and TailwindCSS.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Development
 
-## Expanding the ESLint configuration
+### Run in Development
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+To start the desktop app in development mode:
 
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+```bash
+pnpm dev
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+### Build for Production
+
+To build the desktop app for your current platform:
+
+```bash
+pnpm build
+```
+
+The output will be in the `release` and `dist` directories.
+
+## 🛠️ Tech Stack
+
+- **Electron**: Cross-platform desktop framework.
+- **Vite**: Ultra-fast build tool and dev server.
+- **React**: UI library.
+- **TailwindCSS**: Utility-first CSS framework.
+- **Electron Store**: Persistent storage for clipboard history and settings.
+
+## 📁 Structure
+
+- `electron/`: Electron main process and preload scripts.
+- `src/`: React renderer process (UI).
+- `public/`: Static assets (icons, etc.).
