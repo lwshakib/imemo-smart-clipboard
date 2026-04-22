@@ -48,11 +48,11 @@ export default function DownloadPage() {
   }
 
   return (
-    <div className="bg-zinc-950 min-h-screen font-light antialiased transition-colors duration-300 dark:bg-zinc-950 light:bg-zinc-50">
+    <div className="bg-zinc-50 dark:bg-zinc-950 min-h-screen font-light antialiased transition-colors duration-300">
       {/* Minimalist Navigation */}
-      <nav className="fixed top-0 w-full bg-zinc-950/70 backdrop-blur-xl z-50 border-b border-white/5">
+      <nav className="fixed top-0 w-full bg-zinc-50/70 dark:bg-zinc-950/70 backdrop-blur-xl z-50 border-b border-zinc-200 dark:border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="font-medium text-lg tracking-tighter text-zinc-50 flex items-center gap-3">
+          <Link href="/" className="font-medium text-lg tracking-tighter text-zinc-900 dark:text-zinc-50 flex items-center gap-3">
             <Logo size={28} />
             iMemo
           </Link>
@@ -72,10 +72,10 @@ export default function DownloadPage() {
       {/* Hero / Detection Section (Minimalist Redesign) */}
       <section className="pt-48 pb-24 px-6 border-b border-white/5">
         <div className="max-w-4xl mx-auto flex flex-col items-center text-center">
-          <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center mb-8 shadow-2xl">
+          <div className="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 flex items-center justify-center mb-8 shadow-2xl">
             <Logo size={40} />
           </div>
-          <h1 className="text-4xl md:text-5xl font-medium text-zinc-50 tracking-tighter mb-4">
+          <h1 className="text-4xl md:text-5xl font-medium text-zinc-900 dark:text-zinc-50 tracking-tighter mb-4">
             Ready to boost your productivity?
           </h1>
           <p className="text-zinc-500 mb-10 max-w-lg mx-auto text-sm leading-relaxed">
@@ -85,7 +85,7 @@ export default function DownloadPage() {
           {/* Minimalist Download Button */}
           <a 
             href={getDownloadUrl(detectedOS)}
-            className="group relative flex items-center gap-3 bg-zinc-50 hover:bg-zinc-200 text-zinc-950 px-8 py-4 rounded-full transition-all duration-300 transform active:scale-95 cursor-pointer"
+            className="group relative flex items-center gap-3 bg-zinc-900 dark:bg-zinc-50 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-zinc-50 dark:text-zinc-950 px-8 py-4 rounded-full transition-all duration-300 transform active:scale-95 cursor-pointer"
           >
             <Download size={18} className="group-hover:translate-y-0.5 transition-transform" />
             <div className="flex flex-col items-start leading-none">
@@ -108,24 +108,24 @@ export default function DownloadPage() {
       <section className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col items-center text-center mb-16">
-            <h2 className="text-2xl font-medium text-zinc-50 tracking-tight mb-3">Other Platforms</h2>
+            <h2 className="text-2xl font-medium text-zinc-900 dark:text-zinc-50 tracking-tight mb-3">Other Platforms</h2>
             <p className="text-zinc-500 text-sm">Download iMemo for your other devices</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-fr">
             
             {/* Windows Card */}
-            <div className="p-8 rounded-3xl border border-white/5 bg-zinc-900/10 flex flex-col items-center text-center group hover:bg-zinc-900/30 transition-all hover:border-white/10">
-              <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <div className="p-8 rounded-3xl border border-zinc-200 dark:border-white/5 bg-zinc-100/50 dark:bg-zinc-900/10 flex flex-col items-center text-center group hover:bg-zinc-200/50 dark:hover:bg-zinc-900/30 transition-all hover:border-zinc-300 dark:hover:border-white/10">
+              <div className="w-12 h-12 rounded-xl bg-zinc-200 dark:bg-zinc-900 border border-zinc-300 dark:border-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Icon icon="logos:microsoft-windows-icon" className="text-xl" />
               </div>
-              <h3 className="text-lg font-medium text-zinc-50 mb-2 tracking-tight">Windows</h3>
+              <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-50 mb-2 tracking-tight">Windows</h3>
               <p className="text-[11px] text-zinc-500 mb-8 leading-relaxed px-4">
                 Full support for Windows 10 & 11.<br />Installer available for x64.
               </p>
               <a 
                 href={DOWNLOAD_URLS.WINDOWS}
-                className="mt-auto w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-zinc-900 border border-white/5 text-zinc-400 text-xs font-medium hover:bg-zinc-50 hover:text-zinc-950 transition-all"
+                className="mt-auto w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-zinc-200 dark:bg-zinc-900 border border-zinc-300 dark:border-white/5 text-zinc-600 dark:text-zinc-400 text-xs font-medium hover:bg-zinc-900 dark:hover:bg-zinc-50 hover:text-zinc-50 dark:hover:text-zinc-950 transition-all"
               >
                 <Download size={14} />
                 Download for Windows
@@ -133,17 +133,17 @@ export default function DownloadPage() {
             </div>
 
             {/* macOS Card */}
-            <div className="p-8 rounded-3xl border border-white/5 bg-zinc-900/10 flex flex-col items-center text-center group hover:bg-zinc-900/30 transition-all hover:border-white/10">
-              <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <div className="p-8 rounded-3xl border border-zinc-200 dark:border-white/5 bg-zinc-100/50 dark:bg-zinc-900/10 flex flex-col items-center text-center group hover:bg-zinc-200/50 dark:hover:bg-zinc-900/30 transition-all hover:border-zinc-300 dark:hover:border-white/10">
+              <div className="w-12 h-12 rounded-xl bg-zinc-200 dark:bg-zinc-900 border border-zinc-300 dark:border-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Icon icon="logos:apple" className="text-xl" />
               </div>
-              <h3 className="text-lg font-medium text-zinc-50 mb-2 tracking-tight">macOS</h3>
+              <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-50 mb-2 tracking-tight">macOS</h3>
               <p className="text-[11px] text-zinc-500 mb-8 leading-relaxed px-4">
                 Optimized for Apple Silicon.<br />Works on Intel-based Macs.
               </p>
               <a 
                 href={DOWNLOAD_URLS.MAC}
-                className="mt-auto w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-zinc-900 border border-white/5 text-zinc-400 text-xs font-medium hover:bg-zinc-50 hover:text-zinc-950 transition-all"
+                className="mt-auto w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-zinc-200 dark:bg-zinc-900 border border-zinc-300 dark:border-white/5 text-zinc-600 dark:text-zinc-400 text-xs font-medium hover:bg-zinc-900 dark:hover:bg-zinc-50 hover:text-zinc-50 dark:hover:text-zinc-950 transition-all"
               >
                 <Download size={14} />
                 Download for macOS
@@ -151,25 +151,25 @@ export default function DownloadPage() {
             </div>
 
             {/* Linux Card */}
-            <div className="p-8 rounded-3xl border border-white/5 bg-zinc-900/10 flex flex-col items-center text-center group hover:bg-zinc-900/30 transition-all hover:border-white/10">
-              <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <div className="p-8 rounded-3xl border border-zinc-200 dark:border-white/5 bg-zinc-100/50 dark:bg-zinc-900/10 flex flex-col items-center text-center group hover:bg-zinc-200/50 dark:hover:bg-zinc-900/30 transition-all hover:border-zinc-300 dark:hover:border-white/10">
+              <div className="w-12 h-12 rounded-xl bg-zinc-200 dark:bg-zinc-900 border border-zinc-300 dark:border-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Icon icon="logos:linux-tux" className="text-xl" />
               </div>
-              <h3 className="text-lg font-medium text-zinc-50 mb-2 tracking-tight">Linux</h3>
+              <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-50 mb-2 tracking-tight">Linux</h3>
               <p className="text-[11px] text-zinc-500 mb-8 leading-relaxed px-4">
                 Universal AppImage support.<br />Debian and RPM packages.
               </p>
               <div className="mt-auto w-full flex flex-col gap-2">
                 <a 
                   href={DOWNLOAD_URLS.LINUX}
-                  className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-zinc-900 border border-white/5 text-zinc-400 text-xs font-medium hover:bg-zinc-50 hover:text-zinc-950 transition-all"
+                  className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-zinc-200 dark:bg-zinc-900 border border-zinc-300 dark:border-white/5 text-zinc-600 dark:text-zinc-400 text-xs font-medium hover:bg-zinc-900 dark:hover:bg-zinc-50 hover:text-zinc-50 dark:hover:text-zinc-950 transition-all"
                 >
                   <Download size={14} />
                   Download for Linux
                 </a>
                 <div className="flex gap-2">
-                  <button className="flex-1 py-1.5 rounded-lg bg-zinc-950 border border-white/5 text-[9px] text-zinc-600 hover:text-zinc-400 transition-colors font-bold tracking-tighter">.deb</button>
-                  <button className="flex-1 py-1.5 rounded-lg bg-zinc-950 border border-white/5 text-[9px] text-zinc-600 hover:text-zinc-400 transition-colors font-bold tracking-tighter">.rpm</button>
+                  <button className="flex-1 py-1.5 rounded-lg bg-zinc-200 dark:bg-zinc-950 border border-zinc-300 dark:border-white/5 text-[9px] text-zinc-500 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-400 transition-colors font-bold tracking-tighter">.deb</button>
+                  <button className="flex-1 py-1.5 rounded-lg bg-zinc-200 dark:bg-zinc-950 border border-zinc-300 dark:border-white/5 text-[9px] text-zinc-500 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-400 transition-colors font-bold tracking-tighter">.rpm</button>
                 </div>
               </div>
             </div>
@@ -179,37 +179,37 @@ export default function DownloadPage() {
       </section>
 
       {/* Requirements Section */}
-      <section className="py-24 px-6 bg-zinc-900/10 border-t border-white/5">
+      <section className="py-24 px-6 bg-zinc-100/30 dark:bg-zinc-900/10 border-t border-zinc-200 dark:border-white/5">
         <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-16">
           <div className="flex flex-col items-center text-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-sky-500/10 flex items-center justify-center text-sky-500">
+            <div className="w-10 h-10 rounded-full bg-sky-500/10 flex items-center justify-center text-sky-600 dark:text-sky-500">
               <Laptop size={20} />
             </div>
-            <h4 className="text-sm font-medium text-zinc-50 tracking-tight">Extremely Light</h4>
-            <p className="text-[11px] text-zinc-500 leading-relaxed">Built with performance in mind. Low memory footprint and instant startup.</p>
+            <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-50 tracking-tight">Extremely Light</h4>
+            <p className="text-[11px] text-zinc-600 dark:text-zinc-500 leading-relaxed">Built with performance in mind. Low memory footprint and instant startup.</p>
           </div>
           <div className="flex flex-col items-center text-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-sky-500/10 flex items-center justify-center text-sky-500">
+            <div className="w-10 h-10 rounded-full bg-sky-500/10 flex items-center justify-center text-sky-600 dark:text-sky-500">
               <Monitor size={20} />
             </div>
-            <h4 className="text-sm font-medium text-zinc-50 tracking-tight">Native Feel</h4>
-            <p className="text-[11px] text-zinc-500 leading-relaxed">Designed to feel like a part of your OS. Smooth animations and transitions.</p>
+            <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-50 tracking-tight">Native Feel</h4>
+            <p className="text-[11px] text-zinc-600 dark:text-zinc-500 leading-relaxed">Designed to feel like a part of your OS. Smooth animations and transitions.</p>
           </div>
           <div className="flex flex-col items-center text-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-sky-500/10 flex items-center justify-center text-sky-500">
+            <div className="w-10 h-10 rounded-full bg-sky-500/10 flex items-center justify-center text-sky-600 dark:text-sky-500">
               <Terminal size={20} />
             </div>
-            <h4 className="text-sm font-medium text-zinc-50 tracking-tight">Privacy First</h4>
-            <p className="text-[11px] text-zinc-500 leading-relaxed">Everything stays on your device. No cloud sync, no tracking, no data leaks.</p>
+            <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-50 tracking-tight">Privacy First</h4>
+            <p className="text-[11px] text-zinc-600 dark:text-zinc-500 leading-relaxed">Everything stays on your device. No cloud sync, no tracking, no data leaks.</p>
           </div>
         </div>
       </section>
 
-      <footer className="pt-24 pb-12 border-t border-white/5 bg-zinc-950 px-6">
+      <footer className="pt-24 pb-12 border-t border-zinc-200 dark:border-white/5 bg-zinc-50 dark:bg-zinc-950 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-20">
             <div className="col-span-2">
-              <div className="font-medium text-lg tracking-tighter text-zinc-50 flex items-center gap-3 mb-6">
+              <div className="font-medium text-lg tracking-tighter text-zinc-900 dark:text-zinc-50 flex items-center gap-3 mb-6">
                 <Logo size={28} />
                 iMemo
               </div>
@@ -219,24 +219,24 @@ export default function DownloadPage() {
             </div>
             
             <div>
-              <h4 className="text-xs font-bold text-zinc-100 tracking-widest mb-6">Product</h4>
+              <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 tracking-widest mb-6">Product</h4>
               <ul className="space-y-4">
-                <li><Link href="/#features" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors">Features</Link></li>
-                <li><Link href="/download" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors">Download</Link></li>
-                <li><Link href="#" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors">Release Notes</Link></li>
+                <li><Link href="/#features" className="text-sm text-zinc-500 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors">Features</Link></li>
+                <li><Link href="/download" className="text-sm text-zinc-500 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors">Download</Link></li>
+                <li><Link href="#" className="text-sm text-zinc-500 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors">Release Notes</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-xs font-bold text-zinc-100 tracking-widest mb-6">Connect</h4>
+              <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 tracking-widest mb-6">Connect</h4>
               <ul className="space-y-4">
-                <li><Link href="https://github.com/lwshakib/imemo-smart-clipboard" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors flex items-center gap-2">
+                <li><Link href="https://github.com/lwshakib/imemo-smart-clipboard" className="text-sm text-zinc-500 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors flex items-center gap-2">
                   <Icon icon="lucide:github" width={14} /> GitHub
                 </Link></li>
-                <li><Link href="#" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors flex items-center gap-2">
+                <li><Link href="#" className="text-sm text-zinc-500 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors flex items-center gap-2">
                   <Icon icon="lucide:twitter" width={14} /> Twitter
                 </Link></li>
-                <li><Link href="#" className="text-sm text-zinc-500 hover:text-zinc-50 transition-colors flex items-center gap-2">
+                <li><Link href="#" className="text-sm text-zinc-500 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors flex items-center gap-2">
                   <Icon icon="lucide:mail" width={14} /> Support
                 </Link></li>
               </ul>
