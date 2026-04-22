@@ -41,6 +41,7 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 interface ClipboardItem {
   id: string
   content: string
+  type: 'text' | 'image'
   timestamp: number
   isStarred: boolean
 }
@@ -218,30 +219,62 @@ app.whenReady().then(() => {
 
   // Start clipboard monitoring (Polling is more reliable in Electron)
   let lastText = clipboard.readText()
+  let lastImage = clipboard.readImage().toDataURL()
+  
   setInterval(() => {
-    const currentText = clipboard.readText()
-    if (currentText && currentText !== lastText) {
-      lastText = currentText
+    const formats = clipboard.availableFormats()
+    
+    if (formats.includes('image/png') || formats.includes('image/jpeg')) {
+      const currentImage = clipboard.readImage()
+      const currentDataUrl = currentImage.toDataURL()
       
-      const history = store.get('history') as ClipboardItem[]
-      // Avoid duplicates at the top (extra check)
-      if (history.length > 0 && history[0].content === currentText) return
-
-      const newItem: ClipboardItem = {
-        id: uuidv4(),
-        content: currentText,
-        timestamp: Date.now(),
-        isStarred: false,
+      // Check if image is valid and different from last one
+      if (currentDataUrl && currentDataUrl !== lastImage && currentDataUrl !== 'data:image/png;base64,') {
+        lastImage = currentDataUrl
+        lastText = clipboard.readText() // Update text to prevent double trigger if image has associated text
+        
+        const history = store.get('history') as ClipboardItem[]
+        
+        const newItem: ClipboardItem = {
+          id: uuidv4(),
+          content: currentDataUrl,
+          type: 'image',
+          timestamp: Date.now(),
+          isStarred: false,
+        }
+        
+        const updatedHistory = [newItem, ...history].slice(0, 100)
+        store.set('history', updatedHistory)
+        win?.webContents.send('history:updated', updatedHistory)
+        showClipboardNotification('Image copied to clipboard')
       }
+    } else {
+      const currentText = clipboard.readText()
+      if (currentText && currentText !== lastText) {
+        lastText = currentText
+        lastImage = '' // Reset image to allow re-copying the same image after text
+        
+        const history = store.get('history') as ClipboardItem[]
+        // Avoid duplicates at the top (extra check)
+        if (history.length > 0 && history[0].content === currentText && history[0].type === 'text') return
 
-      const updatedHistory = [newItem, ...history].slice(0, 100)
-      store.set('history', updatedHistory)
-      
-      // Notify renderer
-      win?.webContents.send('history:updated', updatedHistory)
+        const newItem: ClipboardItem = {
+          id: uuidv4(),
+          content: currentText,
+          type: 'text',
+          timestamp: Date.now(),
+          isStarred: false,
+        }
 
-      // Show desktop notification
-      showClipboardNotification(currentText)
+        const updatedHistory = [newItem, ...history].slice(0, 100)
+        store.set('history', updatedHistory)
+        
+        // Notify renderer
+        win?.webContents.send('history:updated', updatedHistory)
+
+        // Show desktop notification
+        showClipboardNotification(currentText)
+      }
     }
   }, 500)
 
@@ -311,8 +344,14 @@ ipcMain.handle('settings:update', (_, newSettings: any) => {
   return newSettings
 })
 
-ipcMain.on('clipboard:paste-item', (_event, content: string) => {
-  clipboard.writeText(content)
+ipcMain.on('clipboard:paste-item', (_event, item: { content: string, type: 'text' | 'image' }) => {
+  if (item.type === 'image') {
+    const image = nativeImage.createFromDataURL(item.content)
+    clipboard.writeImage(image)
+  } else {
+    clipboard.writeText(item.content)
+  }
+  
   win?.hide()
   
   const settings = store.get('settings') as any

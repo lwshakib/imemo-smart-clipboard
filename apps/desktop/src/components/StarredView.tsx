@@ -4,6 +4,7 @@ import { Star, Trash2, Loader2 } from 'lucide-react';
 interface ClipboardItem {
   id: string;
   content: string;
+  type: 'text' | 'image';
   timestamp: number;
   isStarred: boolean;
 }
@@ -79,8 +80,8 @@ const StarredView: React.FC = () => {
     };
   }, [fetchItems, hasMore, isLoading]);
 
-  const handleItemClick = (content: string) => {
-    window.ipcRenderer.send('clipboard:paste-item', content);
+  const handleItemClick = (item: ClipboardItem) => {
+    window.ipcRenderer.send('clipboard:paste-item', { content: item.content, type: item.type || 'text' });
   };
 
   const handleRemove = async (e: React.MouseEvent, id: string) => {
@@ -118,10 +119,21 @@ const StarredView: React.FC = () => {
           {items.map((item) => (
             <div 
               key={item.id} 
-              onClick={() => handleItemClick(item.content)}
+              onClick={() => handleItemClick(item)}
               className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/5 bg-zinc-900/50 p-4 transition-all hover:bg-zinc-800/80 active:scale-[0.98]"
             >
-              <p className="text-sm text-zinc-300 truncate">{item.content}</p>
+              {item.type === 'image' ? (
+                <div className="mb-2 max-h-40 overflow-hidden rounded-lg bg-zinc-800">
+                  <img 
+                    src={item.content} 
+                    alt="Clipboard item" 
+                    className="w-full object-contain"
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-zinc-300 line-clamp-3">{item.content}</p>
+              )}
+              
               <div className="mt-2 flex items-center justify-between">
                 <span className="text-[10px] text-zinc-500 font-medium">{formatTime(item.timestamp)}</span>
                 
