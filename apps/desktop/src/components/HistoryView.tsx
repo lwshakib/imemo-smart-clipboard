@@ -15,13 +15,30 @@ const HistoryView: React.FC = () => {
   const [items, setItems] = useState<ClipboardItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const observerTarget = useRef<HTMLDivElement>(null);
+  const isLoadingRef = useRef(false);
+  const hasMoreRef = useRef(true);
+  const itemsRef = useRef<ClipboardItem[]>([]);
+  const observer = useRef<IntersectionObserver | null>(null);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
+  useEffect(() => {
+    isLoadingRef.current = isLoading;
+  }, [isLoading]);
+
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+  }, [hasMore]);
 
   const fetchItems = useCallback(async (isInitial = false) => {
-    if (isLoading || (!hasMore && !isInitial)) return;
+    if (isLoadingRef.current || (!hasMoreRef.current && !isInitial)) return;
     
+    isLoadingRef.current = true;
     setIsLoading(true);
-    const offset = isInitial ? 0 : items.length;
+    const offset = isInitial ? 0 : itemsRef.current.length;
     
     try {
       const result = await window.ipcRenderer.invoke('history:get', { offset, limit: PAGE_SIZE });
@@ -29,52 +46,41 @@ const HistoryView: React.FC = () => {
       if (isInitial) {
         setItems(result.items);
       } else {
-        setItems(prev => [...prev, ...result.items]);
+        setItems(prev => {
+          const merged = [...prev, ...result.items];
+          const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
+          return unique.sort((a, b) => b.timestamp - a.timestamp);
+        });
       }
+      hasMoreRef.current = result.hasMore;
       setHasMore(result.hasMore);
     } catch (error) {
       console.error('Failed to fetch history:', error);
     } finally {
+      isLoadingRef.current = false;
       setIsLoading(false);
     }
-  }, [items.length, isLoading, hasMore]);
+  }, []); // Stable fetchItems
 
-  useEffect(() => {
-    fetchItems(true);
+  const observerTargetRef = useCallback((node: HTMLDivElement | null) => {
+    if (observer.current) observer.current.disconnect();
 
-    const listener = () => {
-      // For real-time updates, we reset to the first page to show the newest item
-      setItems(prevItems => prevItems.slice(0, PAGE_SIZE));
-      setHasMore(true);
-    };
-
-    window.ipcRenderer.on('history:updated', listener);
-    return () => {
-      window.ipcRenderer.off('history:updated', listener);
-    };
+    if (node) {
+      observer.current = new IntersectionObserver(
+        entries => {
+          if (entries[0].isIntersecting && hasMoreRef.current && !isLoadingRef.current) {
+            fetchItems();
+          }
+        },
+        { threshold: 0.1, rootMargin: '100px' }
+      );
+      observer.current.observe(node);
+    }
   }, [fetchItems]);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting && hasMore && !isLoading) {
-          fetchItems();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    const currentTarget = observerTarget.current;
-    if (currentTarget) {
-      observer.observe(currentTarget);
-    }
-
-    return () => {
-      if (currentTarget) {
-        observer.unobserve(currentTarget);
-      }
-    };
-  }, [fetchItems, hasMore, isLoading]);
+    fetchItems(true);
+  }, [fetchItems]);
 
   const handleItemClick = (item: ClipboardItem) => {
     window.ipcRenderer.send('clipboard:paste-item', { content: item.content, type: item.type || 'text' });
@@ -144,72 +150,79 @@ const HistoryView: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col p-4 animate-in fade-in slide-in-from-bottom-2 duration-500 min-h-screen">
-      <div className="space-y-3 pb-8">
-        {items.length === 0 && !isLoading ? (
-          <div className="flex flex-col items-center justify-center p-10 text-center text-zinc-500">
-            <p className="text-sm">History is empty</p>
-            <p className="text-[10px] mt-1">Copied text and images will appear here</p>
-          </div>
-        ) : (
-          <>
-            {items.map((item) => (
-              <div 
-                key={item.id} 
-                onClick={() => handleItemClick(item)}
-                onMouseEnter={() => handleMouseEnter(item)}
-                onMouseLeave={() => handleMouseLeave(item)}
-                className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/5 bg-zinc-900/50 p-4 transition-all hover:bg-zinc-800/80 active:scale-[0.98]"
-              >
-                {item.type === 'image' ? (
-                  <div className="mb-2 max-h-40 overflow-hidden rounded-lg bg-zinc-800">
-                    <img 
-                      src={item.content} 
-                      alt="Clipboard item" 
-                      className="w-full object-contain"
-                    />
-                  </div>
-                ) : (
-                  <p className="text-sm text-zinc-300 line-clamp-1">{item.content}</p>
-                )}
+    <div className="flex flex-col p-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      {items.length === 0 && !isLoading ? (
+        <div className="flex flex-col items-center justify-center p-10 text-center text-zinc-500">
+          <p className="text-sm">History is empty</p>
+          <p className="text-[10px] mt-1">Copied text and images will appear here</p>
+        </div>
+      ) : (
+        <div className="space-y-3 pb-8">
+          {items.map((item) => (
+            <div 
+              key={item.id} 
+              onClick={() => handleItemClick(item)}
+              onMouseEnter={() => handleMouseEnter(item)}
+              onMouseLeave={() => handleMouseLeave(item)}
+              className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/5 bg-zinc-900/50 p-4 transition-all hover:bg-zinc-800/80 active:scale-[0.98]"
+            >
+              {item.type === 'image' ? (
+                <div className="mb-2 max-h-40 overflow-hidden rounded-lg bg-zinc-800">
+                  <img 
+                    src={item.content} 
+                    alt="Clipboard item" 
+                    className="w-full object-contain"
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-zinc-300 line-clamp-1">{item.content}</p>
+              )}
+              
+              <div className="mt-2 flex items-center justify-between">
+                <span className="text-[10px] text-zinc-500 font-medium">{formatTime(item.timestamp)}</span>
                 
-                <div className="mt-2 flex items-center justify-between">
-                  <span className="text-[10px] text-zinc-500 font-medium">{formatTime(item.timestamp)}</span>
-                  
-                  <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {item.type !== 'image' && (
-                      <button 
-                        onClick={(e) => handleOpenPreview(e, item)}
-                        className="text-zinc-500 hover:text-zinc-300 transition-colors"
-                        title="Preview"
-                      >
-                        <Maximize2 size={14} />
-                      </button>
-                    )}
+                <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {item.type !== 'image' && (
                     <button 
-                      onClick={(e) => handleToggleStar(e, item.id)}
-                      className={`transition-colors ${item.isStarred ? 'text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
-                    >
-                      <Star size={14} fill={item.isStarred ? "currentColor" : "none"} />
-                    </button>
-                    <button 
-                      onClick={(e) => handleRemove(e, item.id)}
+                      onClick={(e) => handleOpenPreview(e, item)}
                       className="text-zinc-500 hover:text-zinc-300 transition-colors"
+                      title="Preview"
                     >
-                      <Trash2 size={14} />
+                      <Maximize2 size={14} />
                     </button>
-                  </div>
+                  )}
+                  <button 
+                    onClick={(e) => handleToggleStar(e, item.id)}
+                    className={`transition-colors ${item.isStarred ? 'text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+                  >
+                    <Star size={14} fill={item.isStarred ? "currentColor" : "none"} />
+                  </button>
+                  <button 
+                    onClick={(e) => handleRemove(e, item.id)}
+                    className="text-zinc-500 hover:text-zinc-300 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               </div>
-            ))}
-            
-            {/* Scroll Target */}
-            <div ref={observerTarget} className="h-10 flex items-center justify-center">
+            </div>
+          ))}
+          
+          {/* Scroll Target & End Indicator */}
+          {hasMore ? (
+            <div ref={observerTargetRef} className="h-20 flex items-center justify-center">
               {isLoading && <Loader2 className="animate-spin text-zinc-600" size={20} />}
             </div>
-          </>
-        )}
-      </div>
+          ) : items.length > 0 ? (
+            <div className="pt-10 pb-20 flex flex-col items-center justify-center text-center">
+              <div className="h-[1px] w-12 bg-zinc-800 mb-4" />
+              <p className="text-[10px] font-medium text-zinc-600">
+                End of history
+              </p>
+            </div>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 };

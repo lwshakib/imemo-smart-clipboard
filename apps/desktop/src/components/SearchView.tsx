@@ -17,31 +17,71 @@ const SearchView: React.FC = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
-  const observerTarget = useRef<HTMLDivElement>(null);
+  const isLoadingRef = useRef(false);
+  const hasMoreRef = useRef(false);
+  const resultsRef = useRef<ClipboardItem[]>([]);
+  const queryRef = useRef('');
+  const observer = useRef<IntersectionObserver | null>(null);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    resultsRef.current = results;
+  }, [results]);
+
+  useEffect(() => {
+    queryRef.current = query;
+  }, [query]);
+
+  useEffect(() => {
+    isLoadingRef.current = isLoading;
+  }, [isLoading]);
+
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+  }, [hasMore]);
 
   const fetchResults = useCallback(async (isInitial = false) => {
-    if (isLoading || (!hasMore && !isInitial)) return;
-    if (!query.trim()) return;
+    if (isLoadingRef.current || (!hasMoreRef.current && !isInitial)) return;
+    if (!queryRef.current.trim()) return;
 
+    isLoadingRef.current = true;
     setIsLoading(true);
-    const offset = isInitial ? 0 : results.length;
+    const offset = isInitial ? 0 : resultsRef.current.length;
 
     try {
-      const result = await window.ipcRenderer.invoke('history:search', { query, offset, limit: PAGE_SIZE });
+      const result = await window.ipcRenderer.invoke('history:search', { query: queryRef.current, offset, limit: PAGE_SIZE });
       
       if (isInitial) {
         setResults(result.items);
       } else {
         setResults(prev => [...prev, ...result.items]);
       }
+      hasMoreRef.current = result.hasMore;
       setHasMore(result.hasMore);
       setHasSearched(true);
     } catch (error) {
       console.error('Failed to search history:', error);
     } finally {
+      isLoadingRef.current = false;
       setIsLoading(false);
     }
-  }, [query, results.length, isLoading, hasMore]);
+  }, []);
+
+  const observerTargetRef = useCallback((node: HTMLDivElement | null) => {
+    if (observer.current) observer.current.disconnect();
+
+    if (node) {
+      observer.current = new IntersectionObserver(
+        entries => {
+          if (entries[0].isIntersecting && hasMoreRef.current && !isLoadingRef.current) {
+            fetchResults();
+          }
+        },
+        { threshold: 0.1, rootMargin: '100px' }
+      );
+      observer.current.observe(node);
+    }
+  }, [fetchResults]);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -50,28 +90,6 @@ const SearchView: React.FC = () => {
       fetchResults(true);
     }
   };
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting && hasMore && !isLoading) {
-          fetchResults();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    const currentTarget = observerTarget.current;
-    if (currentTarget) {
-      observer.observe(currentTarget);
-    }
-
-    return () => {
-      if (currentTarget) {
-        observer.unobserve(currentTarget);
-      }
-    };
-  }, [fetchResults, hasMore, isLoading]);
 
   const handleItemClick = (item: ClipboardItem) => {
     window.ipcRenderer.send('clipboard:paste-item', { content: item.content, type: item.type || 'text' });
@@ -141,17 +159,19 @@ const SearchView: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col p-4 animate-in fade-in duration-500 min-h-screen">
-      <div className="relative mb-6">
-        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
-        <input 
-          type="text" 
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={onKeyDown}
-          placeholder="Type and press Enter to search..." 
-          className="w-full rounded-xl border border-white/10 bg-zinc-900/50 py-3 pl-10 pr-4 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500/50 focus:outline-none focus:ring-1 focus:ring-zinc-500/50"
-        />
+    <div className="flex flex-col p-4 animate-in fade-in duration-500">
+      <div className="sticky top-0 z-10 -mx-4 mb-6 bg-zinc-950 px-4 pt-1 pb-2">
+        <div className="relative">
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+          <input 
+            type="text" 
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={onKeyDown}
+            placeholder="Type and press Enter to search..." 
+            className="w-full rounded-xl border border-white/10 bg-zinc-900/50 py-3 pl-10 pr-4 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500/50 focus:outline-none focus:ring-1 focus:ring-zinc-500/50"
+          />
+        </div>
       </div>
 
       <div className="space-y-3 pb-8">
@@ -211,9 +231,19 @@ const SearchView: React.FC = () => {
               </div>
             ))}
 
-            <div ref={observerTarget} className="h-10 flex items-center justify-center">
-              {isLoading && <Loader2 className="animate-spin text-zinc-600" size={20} />}
-            </div>
+            {/* Scroll Target & End Indicator */}
+            {hasMore ? (
+              <div ref={observerTargetRef} className="h-20 flex items-center justify-center">
+                {isLoading && <Loader2 className="animate-spin text-zinc-600" size={20} />}
+              </div>
+            ) : results.length > 0 ? (
+              <div className="pt-10 pb-20 flex flex-col items-center justify-center text-center">
+                <div className="h-[1px] w-12 bg-zinc-800 mb-4" />
+                <p className="text-[10px] font-medium text-zinc-600">
+                  End of results
+                </p>
+              </div>
+            ) : null}
           </>
         )}
         

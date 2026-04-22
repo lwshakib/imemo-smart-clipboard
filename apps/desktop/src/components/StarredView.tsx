@@ -15,13 +15,30 @@ const StarredView: React.FC = () => {
   const [items, setItems] = useState<ClipboardItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const observerTarget = useRef<HTMLDivElement>(null);
+  const isLoadingRef = useRef(false);
+  const hasMoreRef = useRef(true);
+  const itemsRef = useRef<ClipboardItem[]>([]);
+  const observer = useRef<IntersectionObserver | null>(null);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
+  useEffect(() => {
+    isLoadingRef.current = isLoading;
+  }, [isLoading]);
+
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+  }, [hasMore]);
 
   const fetchItems = useCallback(async (isInitial = false) => {
-    if (isLoading || (!hasMore && !isInitial)) return;
+    if (isLoadingRef.current || (!hasMoreRef.current && !isInitial)) return;
     
+    isLoadingRef.current = true;
     setIsLoading(true);
-    const offset = isInitial ? 0 : items.length;
+    const offset = isInitial ? 0 : itemsRef.current.length;
     
     try {
       // Note: We're still using history:get but we'll paginate and filter for efficiency
@@ -34,52 +51,42 @@ const StarredView: React.FC = () => {
       if (isInitial) {
         setItems(newBatch);
       } else {
-        setItems(prev => [...prev, ...newBatch]);
+        setItems(prev => {
+          const merged = [...prev, ...newBatch];
+          const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
+          return unique.sort((a, b) => b.timestamp - a.timestamp);
+        });
       }
-      setHasMore(offset + PAGE_SIZE < starred.length);
+      const more = offset + PAGE_SIZE < starred.length;
+      hasMoreRef.current = more;
+      setHasMore(more);
     } catch (error) {
       console.error('Failed to fetch starred items:', error);
     } finally {
+      isLoadingRef.current = false;
       setIsLoading(false);
     }
-  }, [items.length, isLoading, hasMore]);
+  }, []);
 
-  useEffect(() => {
-    fetchItems(true);
-    
-    const listener = () => {
-      // Since we don't have the full history here, we should probably just refetch or handle it differently
-      // But for consistency with HistoryView, let's at least try to keep it functional
-      fetchItems(true);
-    };
+  const observerTargetRef = useCallback((node: HTMLDivElement | null) => {
+    if (observer.current) observer.current.disconnect();
 
-    window.ipcRenderer.on('history:updated', listener);
-    return () => {
-      window.ipcRenderer.off('history:updated', listener);
-    };
+    if (node) {
+      observer.current = new IntersectionObserver(
+        entries => {
+          if (entries[0].isIntersecting && hasMoreRef.current && !isLoadingRef.current) {
+            fetchItems();
+          }
+        },
+        { threshold: 0.1, rootMargin: '100px' }
+      );
+      observer.current.observe(node);
+    }
   }, [fetchItems]);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting && hasMore && !isLoading) {
-          fetchItems();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    const currentTarget = observerTarget.current;
-    if (currentTarget) {
-      observer.observe(currentTarget);
-    }
-
-    return () => {
-      if (currentTarget) {
-        observer.unobserve(currentTarget);
-      }
-    };
-  }, [fetchItems, hasMore, isLoading]);
+    fetchItems(true);
+  }, [fetchItems]);
 
   const handleItemClick = (item: ClipboardItem) => {
     window.ipcRenderer.send('clipboard:paste-item', { content: item.content, type: item.type || 'text' });
@@ -144,7 +151,7 @@ const StarredView: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col p-4 animate-in fade-in slide-in-from-bottom-2 duration-500 min-h-screen">
+    <div className="flex flex-col p-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
       {items.length === 0 && !isLoading ? (
         <div className="flex flex-col items-center justify-center p-10 h-[400px] text-center">
           <div className="rounded-full bg-zinc-800 p-4 mb-4">
@@ -207,9 +214,19 @@ const StarredView: React.FC = () => {
             </div>
           ))}
           
-          <div ref={observerTarget} className="h-10 flex items-center justify-center">
-            {isLoading && <Loader2 className="animate-spin text-zinc-600" size={20} />}
-          </div>
+          {/* Scroll Target & End Indicator */}
+          {hasMore ? (
+            <div ref={observerTargetRef} className="h-20 flex items-center justify-center">
+              {isLoading && <Loader2 className="animate-spin text-zinc-600" size={20} />}
+            </div>
+          ) : items.length > 0 ? (
+            <div className="pt-10 pb-20 flex flex-col items-center justify-center text-center">
+              <div className="h-[1px] w-12 bg-zinc-800 mb-4" />
+              <p className="text-[10px] font-medium text-zinc-600">
+                End of starred items
+              </p>
+            </div>
+          ) : null}
         </div>
       )}
     </div>
