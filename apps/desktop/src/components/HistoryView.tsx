@@ -112,12 +112,23 @@ const HistoryView: React.FC = () => {
   const isManualPreview = useRef(false);
 
   const handleMouseEnter = (item: ClipboardItem) => {
+    handleMouseMove(item);
+  };
+
+  const handleMouseMove = (item: ClipboardItem) => {
     if (item.type === 'image' || !item.content || item.content.trim() === '') return;
+    
+    if (hoverTimer.current) {
+      clearTimeout(hoverTimer.current);
+    } else if (!isManualPreview.current) {
+      window.ipcRenderer.send('preview:hide', { id: item.id, isManual: false });
+    }
     
     hoverTimer.current = setTimeout(() => {
       if (!isManualPreview.current) {
         window.ipcRenderer.send('preview:show', { id: item.id, content: item.content, isManual: false });
       }
+      hoverTimer.current = null;
     }, 1500);
   };
 
@@ -163,6 +174,7 @@ const HistoryView: React.FC = () => {
               key={item.id} 
               onClick={() => handleItemClick(item)}
               onMouseEnter={() => handleMouseEnter(item)}
+              onMouseMove={() => handleMouseMove(item)}
               onMouseLeave={() => handleMouseLeave(item)}
               className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/5 bg-zinc-900/50 p-4 transition-all hover:bg-zinc-800/80 active:scale-[0.98]"
             >
