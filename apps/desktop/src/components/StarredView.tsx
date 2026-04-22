@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Star, Trash2, Loader2 } from 'lucide-react';
+import { Star, Trash2, Loader2, Maximize2 } from 'lucide-react';
 
 interface ClipboardItem {
   id: string;
@@ -103,22 +103,44 @@ const StarredView: React.FC = () => {
   };
 
   const hoverTimer = useRef<NodeJS.Timeout | null>(null);
+  const isManualPreview = useRef(false);
 
   const handleMouseEnter = (item: ClipboardItem) => {
     if (item.type === 'image') return;
     
     hoverTimer.current = setTimeout(() => {
-      window.ipcRenderer.send('preview:show', item.content);
-    }, 800);
+      if (!isManualPreview.current) {
+        window.ipcRenderer.send('preview:show', { id: item.id, content: item.content, isManual: false });
+      }
+    }, 400);
   };
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = (item: ClipboardItem) => {
     if (hoverTimer.current) {
       clearTimeout(hoverTimer.current);
       hoverTimer.current = null;
     }
-    window.ipcRenderer.send('preview:hide');
+    
+    if (!isManualPreview.current) {
+      window.ipcRenderer.send('preview:hide', { id: item.id, isManual: false });
+    }
   };
+
+  const handleOpenPreview = (e: React.MouseEvent, item: ClipboardItem) => {
+    e.stopPropagation();
+    isManualPreview.current = true;
+    window.ipcRenderer.send('preview:show', { id: item.id, content: item.content, isManual: true });
+  };
+
+  useEffect(() => {
+    const listener = (_event: any, id: string) => {
+      isManualPreview.current = false;
+    };
+    window.ipcRenderer.on('preview:hidden', listener);
+    return () => {
+      window.ipcRenderer.off('preview:hidden', listener);
+    };
+  }, []);
 
   return (
     <div className="flex flex-col p-4 animate-in fade-in slide-in-from-bottom-2 duration-500 min-h-screen">
@@ -139,7 +161,7 @@ const StarredView: React.FC = () => {
               key={item.id} 
               onClick={() => handleItemClick(item)}
               onMouseEnter={() => handleMouseEnter(item)}
-              onMouseLeave={handleMouseLeave}
+              onMouseLeave={() => handleMouseLeave(item)}
               className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/5 bg-zinc-900/50 p-4 transition-all hover:bg-zinc-800/80 active:scale-[0.98]"
             >
               {item.type === 'image' ? (
@@ -158,6 +180,15 @@ const StarredView: React.FC = () => {
                 <span className="text-[10px] text-zinc-500 font-medium">{formatTime(item.timestamp)}</span>
                 
                 <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {item.type !== 'image' && (
+                    <button 
+                      onClick={(e) => handleOpenPreview(e, item)}
+                      className="text-zinc-500 hover:text-zinc-300 transition-colors"
+                      title="Preview"
+                    >
+                      <Maximize2 size={14} />
+                    </button>
+                  )}
                   <button 
                     onClick={(e) => handleToggleStar(e, item.id)}
                     className="text-zinc-100 transition-colors"

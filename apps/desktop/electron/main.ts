@@ -59,7 +59,9 @@ const store = new Store({
 })
 
 let win: BrowserWindow | null
-let previewWin: BrowserWindow | null = null
+const manualPreviewWins = new Map<string, BrowserWindow>()
+let hoverPreviewWin: BrowserWindow | null = null
+let currentPreviewContent: string = ''
 let tray: Tray | null = null
 
 const WINDOW_WIDTH = 400
@@ -195,14 +197,16 @@ function createWindow() {
   }
 }
 
-function createPreviewWindow(initialContent?: string) {
-  if (previewWin) return
-
-  previewWin = new BrowserWindow({
-    width: 500,
-    height: 400,
+function createPreviewWindow(id: string, content: string, isManual: boolean) {
+  const previewWidth = 500
+  const previewHeight = 400
+  
+  const previewWin = new BrowserWindow({
+    width: previewWidth,
+    height: previewHeight,
     frame: false,
-    resizable: false,
+    resizable: true,
+    movable: true,
     alwaysOnTop: true,
     show: false,
     skipTaskbar: true,
@@ -212,21 +216,32 @@ function createPreviewWindow(initialContent?: string) {
     },
   })
 
+  // Encode content and id into URL for the new window to pick up
+  const query = new URLSearchParams({ 
+    mode: 'preview', 
+    id, 
+    isManual: isManual ? 'true' : 'false' 
+  }).toString()
+
   if (VITE_DEV_SERVER_URL) {
-    previewWin.loadURL(`${VITE_DEV_SERVER_URL}?mode=preview`)
+    previewWin.loadURL(`${VITE_DEV_SERVER_URL}?${query}`)
   } else {
-    previewWin.loadFile(path.join(RENDERER_DIST, 'index.html'), { query: { mode: 'preview' } })
+    previewWin.loadFile(path.join(RENDERER_DIST, 'index.html'), { query: { mode: 'preview', id, isManual: isManual ? 'true' : 'false' } })
   }
 
   previewWin.webContents.on('did-finish-load', () => {
-    if (initialContent) {
-      previewWin?.webContents.send('preview:content', initialContent)
-    }
+    previewWin.webContents.send('preview:content', { id, content })
   })
 
   previewWin.on('closed', () => {
-    previewWin = null
+    if (isManual) {
+      manualPreviewWins.delete(id)
+    } else {
+      hoverPreviewWin = null
+    }
   })
+
+  return previewWin
 }
 
 app.on('window-all-closed', () => {
@@ -399,29 +414,67 @@ ipcMain.on('clipboard:paste-item', (_event, item: { content: string, type: 'text
   }
 })
 
-ipcMain.on('preview:show', (_event, content: string) => {
-  if (!previewWin) {
-    createPreviewWindow(content)
-  }
+ipcMain.on('preview:show', (_event, { id, content, isManual }: { id: string, content: string, isManual: boolean }) => {
+  if (isManual) {
+    // Hide hover window if it's open
+    if (hoverPreviewWin) {
+      hoverPreviewWin.hide()
+    }
 
-  if (previewWin && win) {
+    // If window for this ID already exists, focus it
+    if (manualPreviewWins.has(id)) {
+      const pWin = manualPreviewWins.get(id)
+      pWin?.show()
+      pWin?.focus()
+      return
+    }
+
+    const pWin = createPreviewWindow(id, content, true)
+    manualPreviewWins.set(id, pWin)
+
     const primaryDisplay = screen.getPrimaryDisplay()
     const { width: screenWidth, height: screenHeight, x: screenX, y: screenY } = primaryDisplay.workArea
     
-    const previewWidth = 500
-    const previewHeight = 400
+    // Offset based on number of windows
+    const offset = manualPreviewWins.size * 20
+    const x = screenX + screenWidth - 500 - offset
+    const y = screenY + screenHeight - WINDOW_HEIGHT - 400 - 10 - offset
     
-    // Position directly ABOVE the main window at the bottom right corner
-    const x = screenX + screenWidth - previewWidth
+    pWin.setPosition(x, y)
+    pWin.show()
+  } else {
+    // Hover preview (only one at a time)
+    if (!hoverPreviewWin) {
+      hoverPreviewWin = createPreviewWindow(id, content, false)
+    }
+
+    const primaryDisplay = screen.getPrimaryDisplay()
+    const { width: screenWidth, height: screenHeight, x: screenX, y: screenY } = primaryDisplay.workArea
+    
+    const x = screenX + screenWidth - 500
     const mainWinY = screenY + screenHeight - WINDOW_HEIGHT
-    const y = mainWinY - previewHeight - 10 // 10px gap
+    const y = mainWinY - 400 - 10
     
-    previewWin.setPosition(x, y)
-    previewWin.webContents.send('preview:content', content)
-    previewWin.showInactive() // Show without taking focus
+    hoverPreviewWin.setPosition(x, y)
+    hoverPreviewWin.webContents.send('preview:content', { id, content })
+    hoverPreviewWin.showInactive()
   }
 })
 
-ipcMain.on('preview:hide', () => {
-  previewWin?.hide()
+ipcMain.on('preview:hide', (_event, { id, isManual }: { id: string, isManual: boolean }) => {
+  if (isManual) {
+    const pWin = manualPreviewWins.get(id)
+    pWin?.close()
+    manualPreviewWins.delete(id)
+  } else {
+    hoverPreviewWin?.hide()
+  }
+  
+  win?.webContents.send('preview:hidden', id)
+})
+
+ipcMain.handle('preview:get-content', (_event, id: string) => {
+  // We can't easily find content by ID here without a global map
+  // But we send it via 'preview:content' on did-finish-load anyway
+  return null 
 })

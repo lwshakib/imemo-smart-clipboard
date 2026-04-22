@@ -23,6 +23,11 @@
     -webkit-app-region: no-drag;
   }
 
+  .select-text {
+    user-select: text !important;
+    cursor: text;
+  }
+
   button, input, a, nav, .scrollable {
     -webkit-app-region: no-drag;
   }
