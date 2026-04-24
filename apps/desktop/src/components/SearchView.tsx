@@ -228,13 +228,13 @@ const SearchView: React.FC = () => {
                     )}
                     <button 
                       onClick={(e) => handleToggleStar(e, item.id)}
-                      className={`transition-colors ${item.isStarred ? 'text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+                      className={`transition-colors ${item.isStarred ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300'}`}
                     >
                       <Star size={14} fill={item.isStarred ? "currentColor" : "none"} />
                     </button>
                     <button 
                       onClick={(e) => handleRemove(e, item.id)}
-                      className="text-zinc-500 hover:text-zinc-300 transition-colors"
+                      className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
                     >
                       <Trash2 size={14} />
                     </button>

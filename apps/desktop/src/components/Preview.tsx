@@ -86,11 +86,11 @@ const Preview: React.FC = () => {
 
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 pb-2 select-text no-drag">
         {content === null ? (
-          <div className="flex items-center justify-center h-full text-zinc-600 text-xs animate-pulse">
+          <div className="flex items-center justify-center h-full text-zinc-400 dark:text-zinc-600 text-xs animate-pulse">
             Loading preview...
           </div>
         ) : content === '' ? (
-          <div className="flex items-center justify-center h-full text-zinc-600 text-xs italic">
+          <div className="flex items-center justify-center h-full text-zinc-400 dark:text-zinc-600 text-xs italic">
             No content to display
           </div>
         ) : content.startsWith('data:image/') ? (

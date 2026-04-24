@@ -162,14 +162,14 @@ const StarredView: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col p-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="flex flex-col p-4 animate-in fade-in duration-500">
       {items.length === 0 && !isLoading ? (
         <div className="flex flex-col items-center justify-center p-10 h-[400px] text-center">
-          <div className="rounded-full bg-zinc-800 p-4 mb-4">
-            <Star size={32} className="text-zinc-600" />
+          <div className="rounded-full bg-zinc-100 dark:bg-zinc-800 p-4 mb-4">
+            <Star size={32} className="text-zinc-400 dark:text-zinc-600" />
           </div>
-          <h2 className="text-xl font-semibold text-zinc-100 mb-2 border-none">No Favorites Yet</h2>
-          <p className="text-xs text-zinc-500 max-w-[200px]">
+          <h2 className="text-xl font-semibold text-zinc-800 dark:text-zinc-100 mb-2 border-none">No Favorites Yet</h2>
+          <p className="text-xs text-zinc-500 dark:text-zinc-500 max-w-[200px]">
             Star important clipboard items to quickly access them here.
           </p>
         </div>

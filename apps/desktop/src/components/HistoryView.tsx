@@ -161,7 +161,7 @@ const HistoryView: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col p-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="flex flex-col p-4 animate-in fade-in duration-500">
       {items.length === 0 && !isLoading ? (
         <div className="flex flex-col items-center justify-center p-10 text-center text-zinc-400 dark:text-zinc-500">
           <p className="text-sm">History is empty</p>
