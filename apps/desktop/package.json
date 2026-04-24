@@ -1,6 +1,7 @@
 {
   "name": "desktop",
   "private": true,
+  "productName": "iMemo Smart Clipboard",
   "version": "0.1.5",
   "type": "module",
   "scripts": {

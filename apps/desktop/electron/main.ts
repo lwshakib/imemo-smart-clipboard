@@ -8,6 +8,7 @@ import { exec } from 'node:child_process'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 app.name = 'iMemo Smart Clipboard'
+app.setAppUserModelId('com.imemo.smart-clipboard')
 
 /**
  * Utility function to get the correct icon path based on the current operating system.
