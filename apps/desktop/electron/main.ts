@@ -1,4 +1,5 @@
-import { app, BrowserWindow, Menu, nativeImage, Tray, screen, ipcMain, clipboard, globalShortcut, Notification, nativeTheme } from 'electron'
+import { app, BrowserWindow, Menu, nativeImage, Tray, screen, ipcMain, clipboard, globalShortcut, Notification, nativeTheme, dialog } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import { v4 as uuidv4 } from 'uuid'
 import Store from 'electron-store'
 import { fileURLToPath } from 'node:url'
@@ -62,7 +63,7 @@ const store = new Store({
       instantPaste: true,
       globalHotkey: 'Alt+V',
       startOnStartup: true,
-      showNotifications: true,
+      showNotifications: false,
       theme: 'system'
     } as Settings
   }
@@ -120,6 +121,45 @@ function createTray() {
       setTimeout(() => win?.setAlwaysOnTop(true), 100)
     }
   })
+}
+
+function setupAutoUpdater() {
+  autoUpdater.autoDownload = true
+  autoUpdater.allowPrerelease = false
+
+  autoUpdater.on('update-available', (info) => {
+    console.log('Update available:', info.version)
+    if (win) {
+      win.webContents.send('update:available', info.version)
+    }
+  })
+
+  autoUpdater.on('update-downloaded', (info) => {
+    console.log('Update downloaded:', info.version)
+    const dialogOpts = {
+      type: 'info' as const,
+      buttons: ['Restart', 'Later'],
+      title: 'Application Update',
+      message: `A new version (${info.version}) has been downloaded.`,
+      detail: 'Restart the application to apply the updates.'
+    }
+
+    dialog.showMessageBox(dialogOpts).then((returnValue) => {
+      if (returnValue.response === 0) autoUpdater.quitAndInstall()
+    })
+  })
+
+  autoUpdater.on('error', (err) => {
+    console.error('Error in auto-updater:', err)
+  })
+
+  // Check for updates every 2 hours
+  setInterval(() => {
+    autoUpdater.checkForUpdatesAndNotify()
+  }, 1000 * 60 * 60 * 2)
+
+  // Initial check
+  autoUpdater.checkForUpdatesAndNotify()
 }
 
 function toggleWindow() {
@@ -366,6 +406,9 @@ app.whenReady().then(() => {
 
   // Enable Hotkey
   registerHotkey()
+
+  // Setup Auto-Updater
+  setupAutoUpdater()
 })
 
 ipcMain.on('hide-window', () => {
