@@ -67,30 +67,30 @@ const SettingsView: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col p-4 animate-in fade-in slide-in-from-top-2 duration-500">
-      <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-6 border-none">Settings</h2>
+    <div className="flex flex-col p-4 animate-in fade-in duration-500">
+      <h2 className="text-xl font-semibold text-zinc-800 dark:text-zinc-100 mb-6 border-none">Settings</h2>
       
       {/* Appearance Section */}
       <div className="mb-6">
         <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 px-1">Appearance</h3>
-        <div className="flex p-1 rounded-xl bg-zinc-900/50 border border-white/5 gap-1">
+        <div className="flex p-1 rounded-xl bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-white/5 gap-1">
           <button 
             onClick={() => updateSetting('theme', 'light')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-all ${settings.theme === 'light' ? 'bg-zinc-100 text-zinc-950 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-all ${settings.theme === 'light' ? 'bg-white dark:bg-zinc-100 text-zinc-950 shadow-sm' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
           >
             <Sun size={14} />
             <span className="text-[10px] font-semibold">Light</span>
           </button>
           <button 
             onClick={() => updateSetting('theme', 'dark')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-all ${settings.theme === 'dark' ? 'bg-zinc-100 text-zinc-950 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-all ${settings.theme === 'dark' ? 'bg-white dark:bg-zinc-100 text-zinc-950 shadow-sm' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
           >
             <Moon size={14} />
             <span className="text-[10px] font-semibold">Dark</span>
           </button>
           <button 
             onClick={() => updateSetting('theme', 'system')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-all ${settings.theme === 'system' ? 'bg-zinc-100 text-zinc-950 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg transition-all ${settings.theme === 'system' ? 'bg-white dark:bg-zinc-100 text-zinc-950 shadow-sm' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
           >
             <Monitor size={14} />
             <span className="text-[10px] font-semibold">System</span>
@@ -110,7 +110,7 @@ const SettingsView: React.FC = () => {
               <Zap size={18} />
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-zinc-200">Instant Paste</span>
+              <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Instant Paste</span>
               <span className="text-[10px] text-zinc-500">Paste immediately after selection</span>
             </div>
           </div>
@@ -129,7 +129,7 @@ const SettingsView: React.FC = () => {
               <Rocket size={18} />
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-zinc-200">Launch at Startup</span>
+              <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Launch at Startup</span>
               <span className="text-[10px] text-zinc-500">Start iMemo when you log in</span>
             </div>
           </div>
@@ -148,7 +148,7 @@ const SettingsView: React.FC = () => {
               <Bell size={18} />
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-zinc-200">Desktop Notifications</span>
+              <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Desktop Notifications</span>
               <span className="text-[10px] text-zinc-500">Show alert when new item is copied</span>
             </div>
           </div>
@@ -197,7 +197,9 @@ const SettingsView: React.FC = () => {
       </div>
 
       <div className="mt-8 pt-6 border-t border-zinc-200 dark:border-white/5">
-        <p className="text-[10px] text-center text-zinc-500 dark:text-zinc-600">iMemo Smart Clipboard v{__APP_VERSION__}</p>
+        <p className="text-[10px] text-center text-zinc-500 dark:text-zinc-600">
+          iMemo Smart Clipboard v{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0'}
+        </p>
       </div>
     </div>
   );
