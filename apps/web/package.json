@@ -1,6 +1,8 @@
 {
   "name": "web",
-  "version": "0.1.7",
+  "productName": "iMemo Smart Clipboard Web",
+  "description": "Web interface for iMemo Smart Clipboard.",
+  "version": "0.1.8",
   "type": "module",
   "private": true,
   "scripts": {

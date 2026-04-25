@@ -2,8 +2,9 @@
   "name": "desktop",
   "private": true,
   "productName": "iMemo Smart Clipboard",
+  "description": "Desktop application for iMemo Smart Clipboard.",
   "author": "Shakib Khan",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "type": "module",
   "scripts": {
     "dev": "vite",

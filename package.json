@@ -1,6 +1,8 @@
 {
   "name": "imemo-smart-clipboard",
-  "version": "0.1.7",
+  "productName": "iMemo Smart Clipboard",
+  "description": "A smart clipboard manager with cloud sync capabilities.",
+  "version": "0.1.8",
   "private": true,
   "scripts": {
     "build": "turbo build",
