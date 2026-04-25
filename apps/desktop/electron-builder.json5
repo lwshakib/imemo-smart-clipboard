@@ -21,6 +21,7 @@
     "artifactName": "${productName}-Mac-${version}.${ext}"
   },
   "win": {
+    "publisherName": "Shakib Khan",
     "icon": "public/icons/win/icon.ico",
     "target": [
       {
