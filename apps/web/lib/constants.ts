@@ -11,6 +11,5 @@ export const SITE_CONFIG = {
   name: "iMemo Smart Clipboard",
   description:
     "The ultimate companion for your desktop clipboard. Designed for developers, writers, and power users who value speed and privacy.",
-  url: "https://imemo.pro", // Replace with actual URL when known
+  url: "https://imemo-smart-clipboard-web.vercel.app",
 }
-
