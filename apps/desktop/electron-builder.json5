@@ -4,15 +4,16 @@
   "productName": "iMemo Smart Clipboard",
   "copyright": "Copyright © 2026 iMemo",
   "asar": true,
-  "directories": {
-    "output": "release/${version}"
-  },
   "files": [
     "dist",
-    "dist-electron",
-    "public"
+    "dist-electron"
   ],
+  "directories": {
+    "output": "release/${version}",
+    "buildResources": "public"
+  },
   "mac": {
+    "icon": "public/icons/mac/icon.icns",
     "category": "public.app-category.utilities",
     "target": [
       "dmg"
@@ -20,6 +21,7 @@
     "artifactName": "${productName}-Mac-${version}.${ext}"
   },
   "win": {
+    "icon": "public/icons/win/icon.ico",
     "target": [
       {
         "target": "nsis",
@@ -40,6 +42,7 @@
     "shortcutName": "iMemo"
   },
   "linux": {
+    "icon": "public/icons/png",
     "target": [
       "AppImage"
     ],

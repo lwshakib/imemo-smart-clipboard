@@ -11,26 +11,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 app.name = 'iMemo Smart Clipboard'
 app.setAppUserModelId('com.imemo.smart-clipboard')
 
-/**
- * Utility function to get the correct icon path based on the current operating system.
- */
-const getIconPath = (): string => {
-  const platform = process.platform
-  const basePath = process.env.APP_ROOT
-
-  if (!basePath) return ''
-
-  switch (platform) {
-    case 'win32':
-      return path.join(basePath, 'public', 'icons', 'win', 'icon.ico')
-    case 'darwin':
-      return path.join(basePath, 'public', 'icons', 'mac', 'icon.icns')
-    case 'linux':
-    default:
-      return path.join(basePath, 'public', 'icons', 'png', '256x256.png')
-  }
-}
-
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 process.env.APP_ROOT = path.join(__dirname, '..')
 
@@ -39,6 +19,27 @@ export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
+
+/**
+ * Utility function to get the correct icon path based on the current operating system.
+ */
+const getIconPath = (): string => {
+  const platform = process.platform;
+  // In dev, assets are in 'public'. In prod, Vite copies them to 'dist'.
+  const resourceDir = VITE_DEV_SERVER_URL 
+    ? path.join(process.env.APP_ROOT, 'public') 
+    : RENDERER_DIST;
+
+  switch (platform) {
+    case 'win32':
+      return path.join(resourceDir, 'icons', 'win', 'icon.ico');
+    case 'darwin':
+      return path.join(resourceDir, 'icons', 'mac', 'icon.icns');
+    case 'linux':
+    default:
+      return path.join(resourceDir, 'icons', 'png', '256x256.png');
+  }
+};
 
 interface ClipboardItem {
   id: string
