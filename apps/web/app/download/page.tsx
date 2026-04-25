@@ -14,10 +14,15 @@ export default function DownloadPage() {
   const [detectedOS, setDetectedOS] = useState<OS>("unknown")
 
   useEffect(() => {
-    const userAgent = window.navigator.userAgent
-    if (userAgent.includes("Win")) setDetectedOS("windows")
-    else if (userAgent.includes("Mac")) setDetectedOS("macos")
-    else if (userAgent.includes("Linux")) setDetectedOS("linux")
+    const userAgent =
+      typeof window !== "undefined" ? window.navigator.userAgent : ""
+    let os: OS = "unknown"
+    if (userAgent.includes("Win")) os = "windows"
+    else if (userAgent.includes("Mac")) os = "macos"
+    else if (userAgent.includes("Linux")) os = "linux"
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDetectedOS(os)
   }, [])
 
   const getOSName = (os: OS) => {
@@ -30,19 +35,6 @@ export default function DownloadPage() {
         return "Linux"
       default:
         return "your OS"
-    }
-  }
-
-  const getOSIcon = (os: OS) => {
-    switch (os) {
-      case "windows":
-        return "logos:microsoft-windows-icon"
-      case "macos":
-        return "logos:apple"
-      case "linux":
-        return "logos:linux-tux"
-      default:
-        return "solar:laptop-linear"
     }
   }
 
