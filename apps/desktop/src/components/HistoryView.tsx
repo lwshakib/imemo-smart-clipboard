@@ -151,14 +151,22 @@ const HistoryView: React.FC = () => {
 
   // Add a way to reset manual preview if the window is hidden from elsewhere
   useEffect(() => {
-    const listener = () => {
+    const hidePreviewListener = () => {
       isManualPreview.current = false;
     };
-    window.ipcRenderer.on('preview:hidden', listener);
-    return () => {
-      window.ipcRenderer.off('preview:hidden', listener);
+    
+    const windowShownListener = () => {
+      fetchItems(true);
     };
-  }, []);
+
+    window.ipcRenderer.on('preview:hidden', hidePreviewListener);
+    window.ipcRenderer.on('window:shown', windowShownListener);
+    
+    return () => {
+      window.ipcRenderer.off('preview:hidden', hidePreviewListener);
+      window.ipcRenderer.off('window:shown', windowShownListener);
+    };
+  }, [fetchItems]);
 
   return (
     <div className="flex flex-col p-4 animate-in fade-in duration-500">

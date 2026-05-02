@@ -126,6 +126,7 @@ function createTray() {
 
 function setupAutoUpdater() {
   autoUpdater.autoDownload = true
+  autoUpdater.autoInstallOnAppQuit = true
   autoUpdater.allowPrerelease = false
 
   autoUpdater.on('update-available', (info) => {
@@ -137,27 +138,18 @@ function setupAutoUpdater() {
 
   autoUpdater.on('update-downloaded', (info) => {
     console.log('Update downloaded:', info.version)
-    const dialogOpts = {
-      type: 'info' as const,
-      buttons: ['Restart', 'Later'],
-      title: 'Application Update',
-      message: `A new version (${info.version}) has been downloaded.`,
-      detail: 'Restart the application to apply the updates.'
-    }
-
-    dialog.showMessageBox(dialogOpts).then((returnValue) => {
-      if (returnValue.response === 0) autoUpdater.quitAndInstall()
-    })
+    // Updates will be installed automatically on app quit
+    // No dialog is shown to the user as per request
   })
 
   autoUpdater.on('error', (err) => {
     console.error('Error in auto-updater:', err)
   })
 
-  // Check for updates every 2 hours
+  // Check for updates every 24 hours
   setInterval(() => {
     autoUpdater.checkForUpdatesAndNotify()
-  }, 1000 * 60 * 60 * 2)
+  }, 1000 * 60 * 60 * 24)
 
   // Initial check
   autoUpdater.checkForUpdatesAndNotify()
@@ -245,6 +237,11 @@ function createWindow() {
       lastBlurTime = Date.now()
       win?.hide()
     }
+  })
+
+  // Notify renderer when window is shown
+  win.on('show', () => {
+    win?.webContents.send('window:shown')
   })
 
   // Minimize to tray
@@ -339,10 +336,19 @@ app.whenReady().then(() => {
   
   // Set initial theme for Electron system UI
   nativeTheme.themeSource = settings.theme || 'system'
-  app.setLoginItemSettings({
-    openAtLogin: settings.startOnStartup,
-    path: app.getPath('exe'),
-  })
+  // Only enable start on startup in production
+  if (app.isPackaged) {
+    app.setLoginItemSettings({
+      openAtLogin: settings.startOnStartup,
+      path: app.getPath('exe'),
+    })
+  } else {
+    // In dev, ensure it's disabled to avoid cluttering startup
+    app.setLoginItemSettings({
+      openAtLogin: false,
+      path: app.getPath('exe'),
+    })
+  }
 
   // Start clipboard monitoring (Polling is more reliable in Electron)
   let lastText = clipboard.readText()
@@ -462,8 +468,8 @@ ipcMain.handle('settings:update', (_event, newSettings: Settings) => {
   const oldSettings = store.get('settings') as Settings
   store.set('settings', newSettings)
   
-  // Handle start on startup change
-  if (newSettings.startOnStartup !== oldSettings.startOnStartup) {
+  // Handle start on startup change (only in production)
+  if (app.isPackaged && newSettings.startOnStartup !== oldSettings.startOnStartup) {
     app.setLoginItemSettings({
       openAtLogin: newSettings.startOnStartup,
       path: app.getPath('exe'),
@@ -571,4 +577,8 @@ ipcMain.on('preview:hide', (_event, { id, isManual }: { id: string, isManual: bo
 ipcMain.handle('preview:get-content', (_event, id: string) => {
   if (!id || id === 'null') return lastHoverContent
   return contentCache.get(id) || null 
+})
+
+ipcMain.handle('app:version', () => {
+  return app.getVersion()
 })

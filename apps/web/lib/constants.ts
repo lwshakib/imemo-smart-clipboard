@@ -1,11 +1,12 @@
+import pkg from "../package.json";
+
+const version = pkg.version;
+
 export const DOWNLOAD_URLS = {
-  WINDOWS:
-    "https://github.com/lwshakib/imemo-smart-clipboard/releases/download/v0.1.8/iMemo-Smart-Clipboard-Windows-0.1.8-Setup.exe",
-  MAC:
-    "https://github.com/lwshakib/imemo-smart-clipboard/releases/download/v0.1.8/iMemo-Smart-Clipboard-Mac-0.1.8.dmg",
-  LINUX:
-    "https://github.com/lwshakib/imemo-smart-clipboard/releases/download/v0.1.8/iMemo-Smart-Clipboard-Linux-0.1.8.AppImage",
-}
+  WINDOWS: `https://github.com/lwshakib/imemo-smart-clipboard/releases/download/v${version}/iMemo-Smart-Clipboard-Windows-${version}-Setup.exe`,
+  MAC: `https://github.com/lwshakib/imemo-smart-clipboard/releases/download/v${version}/iMemo-Smart-Clipboard-Mac-${version}.dmg`,
+  LINUX: `https://github.com/lwshakib/imemo-smart-clipboard/releases/download/v${version}/iMemo-Smart-Clipboard-Linux-${version}.AppImage`,
+};
 
 export const SITE_CONFIG = {
   name: "iMemo Smart Clipboard",

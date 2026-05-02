@@ -12,13 +12,21 @@ interface AppSettings {
 const SettingsView: React.FC = () => {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [version, setVersion] = useState<string>('0.0.0');
 
   useEffect(() => {
     const fetchSettings = async () => {
       const s = await window.ipcRenderer.invoke('settings:get');
       setSettings(s);
     };
+    
+    const fetchVersion = async () => {
+      const v = await window.ipcRenderer.invoke('app:version');
+      setVersion(v);
+    };
+
     fetchSettings();
+    fetchVersion();
   }, []);
 
   const updateSetting = useCallback(async <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
@@ -198,7 +206,7 @@ const SettingsView: React.FC = () => {
 
       <div className="mt-8 pt-6 border-t border-zinc-200 dark:border-white/5">
         <p className="text-[10px] text-center text-zinc-500 dark:text-zinc-600">
-          iMemo Smart Clipboard v{typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0'}
+          iMemo Smart Clipboard v{version}
         </p>
       </div>
     </div>
