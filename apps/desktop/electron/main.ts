@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, nativeImage, Tray, screen, ipcMain, clipboard, globalShortcut, Notification, nativeTheme, dialog } from 'electron'
+import { app, BrowserWindow, Menu, nativeImage, Tray, screen, ipcMain, clipboard, globalShortcut, Notification, nativeTheme } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { v4 as uuidv4 } from 'uuid'
 import Store from 'electron-store'
