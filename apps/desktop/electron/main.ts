@@ -350,66 +350,65 @@ app.whenReady().then(() => {
     })
   }
 
-  // Start clipboard monitoring (Polling is more reliable in Electron)
-  let lastText = clipboard.readText()
-  let lastImage = clipboard.readImage().toDataURL()
-  
-  setInterval(() => {
-    const formats = clipboard.availableFormats()
-    
-    if (formats.includes('image/png') || formats.includes('image/jpeg')) {
-      const currentImage = clipboard.readImage()
-      const currentDataUrl = currentImage.toDataURL()
+  // Start clipboard monitoring
+  import('clipboard-event').then((clipboardWatcher) => {
+    const watcher = clipboardWatcher.default
+    watcher.start()
+
+    let lastText = clipboard.readText()
+    let lastImage = clipboard.readImage().toDataURL()
+
+    watcher.on('copy', () => {
+      const formats = clipboard.availableFormats()
       
-      // Check if image is valid and different from last one
-      if (currentDataUrl && currentDataUrl !== lastImage && currentDataUrl !== 'data:image/png;base64,') {
-        lastImage = currentDataUrl
-        lastText = clipboard.readText() // Update text to prevent double trigger if image has associated text
+      if (formats.includes('image/png') || formats.includes('image/jpeg')) {
+        const currentImage = clipboard.readImage()
+        const currentDataUrl = currentImage.toDataURL()
         
-        const history = store.get('history') as ClipboardItem[]
-        
-        const newItem: ClipboardItem = {
-          id: uuidv4(),
-          content: currentDataUrl,
-          type: 'image',
-          timestamp: Date.now(),
-          isStarred: false,
+        if (currentDataUrl && currentDataUrl !== lastImage && currentDataUrl !== 'data:image/png;base64,') {
+          lastImage = currentDataUrl
+          lastText = clipboard.readText()
+          
+          const history = store.get('history') as ClipboardItem[]
+          
+          const newItem: ClipboardItem = {
+            id: uuidv4(),
+            content: currentDataUrl,
+            type: 'image',
+            timestamp: Date.now(),
+            isStarred: false,
+          }
+          
+          const updatedHistory = [newItem, ...history].slice(0, 100)
+          store.set('history', updatedHistory)
+          win?.webContents.send('history:updated', updatedHistory)
+          showClipboardNotification('Image copied to clipboard')
         }
-        
-        const updatedHistory = [newItem, ...history].slice(0, 100)
-        store.set('history', updatedHistory)
-        win?.webContents.send('history:updated', updatedHistory)
-        showClipboardNotification('Image copied to clipboard')
-      }
-    } else {
-      const currentText = clipboard.readText()
-      if (currentText && currentText !== lastText) {
-        lastText = currentText
-        lastImage = '' // Reset image to allow re-copying the same image after text
-        
-        const history = store.get('history') as ClipboardItem[]
-        // Avoid duplicates at the top (extra check)
-        if (history.length > 0 && history[0].content === currentText && history[0].type === 'text') return
-
-        const newItem: ClipboardItem = {
-          id: uuidv4(),
-          content: currentText,
-          type: 'text',
-          timestamp: Date.now(),
-          isStarred: false,
+      } else {
+        const currentText = clipboard.readText()
+        if (currentText && currentText !== lastText) {
+          lastText = currentText
+          lastImage = ''
+          
+          const history = store.get('history') as ClipboardItem[]
+          if (history.length > 0 && history[0].content === currentText && history[0].type === 'text') return
+          
+          const newItem: ClipboardItem = {
+            id: uuidv4(),
+            content: currentText,
+            type: 'text',
+            timestamp: Date.now(),
+            isStarred: false,
+          }
+          
+          const updatedHistory = [newItem, ...history].slice(0, 100)
+          store.set('history', updatedHistory)
+          win?.webContents.send('history:updated', updatedHistory)
+          showClipboardNotification(currentText)
         }
-
-        const updatedHistory = [newItem, ...history].slice(0, 100)
-        store.set('history', updatedHistory)
-        
-        // Notify renderer
-        win?.webContents.send('history:updated', updatedHistory)
-
-        // Show desktop notification
-        showClipboardNotification(currentText)
       }
-    }
-  }, 500)
+    })
+  })
 
   // Enable Hotkey
   registerHotkey()
