@@ -199,7 +199,7 @@ function showClipboardNotification(content: string) {
 
   new Notification({
     title: 'Copied to iMemo',
-    body: content.length > 50 ? content.substring(0, 50) + '...' : content,
+    body: content.length > 200 ? content.substring(0, 200) + '...' : content,
     silent: true,
     icon: getIconPath()
   }).show()
