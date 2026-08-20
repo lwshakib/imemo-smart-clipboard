@@ -546,19 +546,26 @@ ipcMain.on('clipboard:paste-item', (_event, item: { content: string, type: 'text
       clipboard.writeText(item.content)
     }
     
-    win?.hide()
-    
     // Close all manual previews and hide the hover preview
     manualPreviewWins.forEach(pWin => pWin.close())
     manualPreviewWins.clear()
     hoverPreviewWin?.hide()
     
     const settings = store.get('settings') as Settings
-    if (settings?.instantPaste) {
-      // Small delay to let focus return to the previous application
-      setTimeout(() => {
+    if (settings?.instantPaste && win) {
+      if (win.isVisible()) {
+        // Event-driven focus tracking: trigger paste after window hide event completes
+        win.once('hide', () => {
+          setTimeout(() => {
+            simulatePaste()
+          }, 50)
+        })
+        win.hide()
+      } else {
         simulatePaste()
-      }, 150)
+      }
+    } else {
+      win?.hide()
     }
   } catch (error) {
     console.error('Error in clipboard:paste-item handler:', error)
