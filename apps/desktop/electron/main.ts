@@ -435,72 +435,106 @@ app.whenReady().then(() => {
 })
 
 ipcMain.on('hide-window', () => {
-  win?.hide()
+  try {
+    win?.hide()
+  } catch (error) {
+    console.error('Error in hide-window handler:', error)
+  }
 })
 
 ipcMain.handle('history:get', (_event, { offset = 0, limit = 20 } = {}) => {
-  const history = store.get('history') as ClipboardItem[]
-  const items = history.slice(offset, offset + limit)
-  return {
-    items,
-    total: history.length,
-    hasMore: offset + limit < history.length
+  try {
+    const history = (store.get('history') as ClipboardItem[]) || []
+    const items = history.slice(offset, offset + limit)
+    return {
+      items,
+      total: history.length,
+      hasMore: offset + limit < history.length
+    }
+  } catch (error) {
+    console.error('Error in history:get handler:', error)
+    return { items: [], total: 0, hasMore: false }
   }
 })
 
 ipcMain.handle('history:remove', (_event, id: string) => {
-  const history = store.get('history') as ClipboardItem[]
-  const updatedHistory = history.filter(item => item.id !== id)
-  store.set('history', updatedHistory)
-  return updatedHistory
+  try {
+    const history = (store.get('history') as ClipboardItem[]) || []
+    const updatedHistory = history.filter(item => item.id !== id)
+    store.set('history', updatedHistory)
+    return updatedHistory
+  } catch (error) {
+    console.error('Error in history:remove handler:', error)
+    return (store.get('history') as ClipboardItem[]) || []
+  }
 })
 
 ipcMain.handle('history:toggle-star', (_event, id: string) => {
-  const history = store.get('history') as ClipboardItem[]
-  const updatedHistory = history.map(item => 
-    item.id === id ? { ...item, isStarred: !item.isStarred } : item
-  )
-  store.set('history', updatedHistory)
-  return updatedHistory
+  try {
+    const history = (store.get('history') as ClipboardItem[]) || []
+    const updatedHistory = history.map(item => 
+      item.id === id ? { ...item, isStarred: !item.isStarred } : item
+    )
+    store.set('history', updatedHistory)
+    return updatedHistory
+  } catch (error) {
+    console.error('Error in history:toggle-star handler:', error)
+    return (store.get('history') as ClipboardItem[]) || []
+  }
 })
 
 ipcMain.handle('history:search', (_event, { query, offset = 0, limit = 20 }) => {
-  const history = store.get('history') as ClipboardItem[]
-  if (!query) return { items: history.slice(offset, offset + limit), total: history.length, hasMore: offset + limit < history.length }
-  const lowerQuery = query.toLowerCase()
-  const filtered = history.filter(item => item.content.toLowerCase().includes(lowerQuery))
-  return {
-    items: filtered.slice(offset, offset + limit),
-    total: filtered.length,
-    hasMore: offset + limit < filtered.length
+  try {
+    const history = (store.get('history') as ClipboardItem[]) || []
+    if (!query) return { items: history.slice(offset, offset + limit), total: history.length, hasMore: offset + limit < history.length }
+    const lowerQuery = query.toLowerCase()
+    const filtered = history.filter(item => item.content && item.content.toLowerCase().includes(lowerQuery))
+    return {
+      items: filtered.slice(offset, offset + limit),
+      total: filtered.length,
+      hasMore: offset + limit < filtered.length
+    }
+  } catch (error) {
+    console.error('Error in history:search handler:', error)
+    return { items: [], total: 0, hasMore: false }
   }
 })
 
 ipcMain.handle('settings:get', () => {
-  return store.get('settings')
+  try {
+    return store.get('settings')
+  } catch (error) {
+    console.error('Error in settings:get handler:', error)
+    return null
+  }
 })
 
 ipcMain.handle('settings:update', (_event, newSettings: Settings) => {
-  const oldSettings = store.get('settings') as Settings
-  store.set('settings', newSettings)
-  
-  // Handle start on startup change (only in production)
-  if (app.isPackaged && newSettings.startOnStartup !== oldSettings.startOnStartup) {
-    app.setLoginItemSettings({
-      openAtLogin: newSettings.startOnStartup,
-      path: app.getPath('exe'),
-    })
-  }
+  try {
+    const oldSettings = store.get('settings') as Settings
+    store.set('settings', newSettings)
+    
+    // Handle start on startup change (only in production)
+    if (app.isPackaged && newSettings.startOnStartup !== oldSettings?.startOnStartup) {
+      app.setLoginItemSettings({
+        openAtLogin: newSettings.startOnStartup,
+        path: app.getPath('exe'),
+      })
+    }
 
-  registerHotkey() // Re-register in case hotkey changed
-  
-  // Update Electron's native theme source
-  nativeTheme.themeSource = newSettings.theme || 'system'
-  
-  // Notify renderer about the update (for theme switching, etc)
-  win?.webContents.send('settings:updated', newSettings)
-  
-  return newSettings
+    registerHotkey() // Re-register in case hotkey changed
+    
+    // Update Electron's native theme source
+    nativeTheme.themeSource = newSettings.theme || 'system'
+    
+    // Notify renderer about the update (for theme switching, etc)
+    win?.webContents.send('settings:updated', newSettings)
+    
+    return newSettings
+  } catch (error) {
+    console.error('Error in settings:update handler:', error)
+    return store.get('settings')
+  }
 })
 
 ipcMain.on('clipboard:paste-item', (_event, item: { content: string, type: 'text' | 'image' }) => {
@@ -511,94 +545,112 @@ ipcMain.on('clipboard:paste-item', (_event, item: { content: string, type: 'text
     } else {
       clipboard.writeText(item.content)
     }
+    
+    win?.hide()
+    
+    // Close all manual previews and hide the hover preview
+    manualPreviewWins.forEach(pWin => pWin.close())
+    manualPreviewWins.clear()
+    hoverPreviewWin?.hide()
+    
+    const settings = store.get('settings') as Settings
+    if (settings?.instantPaste) {
+      // Small delay to let focus return to the previous application
+      setTimeout(() => {
+        simulatePaste()
+      }, 150)
+    }
   } catch (error) {
-    console.error('Failed to write item to clipboard:', error)
-  }
-  
-  win?.hide()
-  
-  // Close all manual previews and hide the hover preview
-  manualPreviewWins.forEach(pWin => pWin.close())
-  manualPreviewWins.clear()
-  hoverPreviewWin?.hide()
-  
-  const settings = store.get('settings') as Settings
-  if (settings.instantPaste) {
-    // Small delay to let focus return to the previous application
-    setTimeout(() => {
-      simulatePaste()
-    }, 150)
+    console.error('Error in clipboard:paste-item handler:', error)
   }
 })
 
 ipcMain.on('preview:show', (_event, { id, content, isManual }: { id: string, content: string, isManual: boolean }) => {
-  contentCache.set(id, content)
-  if (!isManual) lastHoverContent = content
-  
-  if (isManual) {
-    // Hide hover window if it's open
-    if (hoverPreviewWin) {
-      hoverPreviewWin.hide()
+  try {
+    contentCache.set(id, content)
+    if (!isManual) lastHoverContent = content
+    
+    if (isManual) {
+      // Hide hover window if it's open
+      if (hoverPreviewWin) {
+        hoverPreviewWin.hide()
+      }
+
+      // If window for this ID already exists, focus it
+      if (manualPreviewWins.has(id)) {
+        const pWin = manualPreviewWins.get(id)
+        pWin?.show()
+        pWin?.focus()
+        return
+      }
+
+      const pWin = createPreviewWindow(id, content, true)
+      manualPreviewWins.set(id, pWin)
+
+      const primaryDisplay = screen.getPrimaryDisplay()
+      const { width: screenWidth, height: screenHeight, x: screenX, y: screenY } = primaryDisplay.workArea
+      
+      // Offset based on number of windows
+      const offset = manualPreviewWins.size * 20
+      const x = screenX + screenWidth - 500 - offset
+      const y = screenY + screenHeight - WINDOW_HEIGHT - 400 - 10 - offset
+      
+      pWin.setPosition(x, y)
+      pWin.show()
+    } else {
+      // Hover preview (only one at a time)
+      if (!hoverPreviewWin) {
+        hoverPreviewWin = createPreviewWindow(id, content, false)
+      }
+
+      const primaryDisplay = screen.getPrimaryDisplay()
+      const { width: screenWidth, height: screenHeight, x: screenX, y: screenY } = primaryDisplay.workArea
+      
+      const x = screenX + screenWidth - 500
+      const mainWinY = screenY + screenHeight - WINDOW_HEIGHT
+      const y = mainWinY - 400 - 10
+      
+      hoverPreviewWin.setPosition(x, y)
+      hoverPreviewWin.webContents.send('preview:content', { id, content })
+      hoverPreviewWin.showInactive()
     }
-
-    // If window for this ID already exists, focus it
-    if (manualPreviewWins.has(id)) {
-      const pWin = manualPreviewWins.get(id)
-      pWin?.show()
-      pWin?.focus()
-      return
-    }
-
-    const pWin = createPreviewWindow(id, content, true)
-    manualPreviewWins.set(id, pWin)
-
-    const primaryDisplay = screen.getPrimaryDisplay()
-    const { width: screenWidth, height: screenHeight, x: screenX, y: screenY } = primaryDisplay.workArea
-    
-    // Offset based on number of windows
-    const offset = manualPreviewWins.size * 20
-    const x = screenX + screenWidth - 500 - offset
-    const y = screenY + screenHeight - WINDOW_HEIGHT - 400 - 10 - offset
-    
-    pWin.setPosition(x, y)
-    pWin.show()
-  } else {
-    // Hover preview (only one at a time)
-    if (!hoverPreviewWin) {
-      hoverPreviewWin = createPreviewWindow(id, content, false)
-    }
-
-    const primaryDisplay = screen.getPrimaryDisplay()
-    const { width: screenWidth, height: screenHeight, x: screenX, y: screenY } = primaryDisplay.workArea
-    
-    const x = screenX + screenWidth - 500
-    const mainWinY = screenY + screenHeight - WINDOW_HEIGHT
-    const y = mainWinY - 400 - 10
-    
-    hoverPreviewWin.setPosition(x, y)
-    hoverPreviewWin.webContents.send('preview:content', { id, content })
-    hoverPreviewWin.showInactive()
+  } catch (error) {
+    console.error('Error in preview:show handler:', error)
   }
 })
 
 ipcMain.on('preview:hide', (_event, { id, isManual }: { id: string, isManual: boolean }) => {
-  if (isManual) {
-    const pWin = manualPreviewWins.get(id)
-    pWin?.close()
-    manualPreviewWins.delete(id)
-  } else {
-    hoverPreviewWin?.hide()
-    hoverPreviewWin?.webContents.send('preview:clear')
+  try {
+    if (isManual) {
+      const pWin = manualPreviewWins.get(id)
+      pWin?.close()
+      manualPreviewWins.delete(id)
+    } else {
+      hoverPreviewWin?.hide()
+      hoverPreviewWin?.webContents.send('preview:clear')
+    }
+    
+    win?.webContents.send('preview:hidden', id)
+  } catch (error) {
+    console.error('Error in preview:hide handler:', error)
   }
-  
-  win?.webContents.send('preview:hidden', id)
 })
 
 ipcMain.handle('preview:get-content', (_event, id: string) => {
-  if (!id || id === 'null') return lastHoverContent
-  return contentCache.get(id) || null 
+  try {
+    if (!id || id === 'null') return lastHoverContent
+    return contentCache.get(id) || null
+  } catch (error) {
+    console.error('Error in preview:get-content handler:', error)
+    return null
+  }
 })
 
 ipcMain.handle('app:version', () => {
-  return app.getVersion()
+  try {
+    return app.getVersion()
+  } catch (error) {
+    console.error('Error in app:version handler:', error)
+    return ''
+  }
 })
