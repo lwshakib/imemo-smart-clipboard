@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 import Store from 'electron-store'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { exec } from 'node:child_process'
+import { execFile } from 'node:child_process'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -192,13 +192,27 @@ function registerHotkey() {
 function simulatePaste() {
   const platform = process.platform
   if (platform === 'win32') {
-    // Windows: Use PowerShell to send Ctrl+V
-    const command = `powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^v')"`
-    exec(command)
+    // Windows: Use PowerShell without shell invocation to send Ctrl+V
+    execFile(
+      'powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-Command', "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^v')"],
+      (error) => {
+        if (error) {
+          console.error('Failed to simulate paste on Windows:', error)
+        }
+      }
+    )
   } else if (platform === 'darwin') {
-    // macOS: Use AppleScript to send Cmd+V
-    const command = `osascript -e 'tell application "System Events" to keystroke "v" using command down'`
-    exec(command)
+    // macOS: Use AppleScript without shell invocation to send Cmd+V
+    execFile(
+      'osascript',
+      ['-e', 'tell application "System Events" to keystroke "v" using command down'],
+      (error) => {
+        if (error) {
+          console.error('Failed to simulate paste on macOS:', error)
+        }
+      }
+    )
   }
 }
 
