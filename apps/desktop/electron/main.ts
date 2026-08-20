@@ -355,59 +355,76 @@ app.whenReady().then(() => {
     const watcher = clipboardWatcher.default
     watcher.start()
 
-    let lastText = clipboard.readText()
-    let lastImage = clipboard.readImage().toDataURL()
+    let lastText = ''
+    let lastImage = ''
+
+    try {
+      lastText = clipboard.readText()
+      lastImage = clipboard.readImage().toDataURL()
+    } catch (error) {
+      console.error('Failed to read initial clipboard content:', error)
+    }
 
     watcher.on('copy', () => {
-      const formats = clipboard.availableFormats()
-      
-      if (formats.includes('image/png') || formats.includes('image/jpeg')) {
-        const currentImage = clipboard.readImage()
-        const currentDataUrl = currentImage.toDataURL()
+      try {
+        const formats = clipboard.availableFormats()
         
-        if (currentDataUrl && currentDataUrl !== lastImage && currentDataUrl !== 'data:image/png;base64,') {
-          lastImage = currentDataUrl
-          lastText = clipboard.readText()
+        if (formats.includes('image/png') || formats.includes('image/jpeg')) {
+          const currentImage = clipboard.readImage()
+          const currentDataUrl = currentImage.toDataURL()
           
-          const history = store.get('history') as ClipboardItem[]
-          
-          const newItem: ClipboardItem = {
-            id: uuidv4(),
-            content: currentDataUrl,
-            type: 'image',
-            timestamp: Date.now(),
-            isStarred: false,
+          if (currentDataUrl && currentDataUrl !== lastImage && currentDataUrl !== 'data:image/png;base64,') {
+            lastImage = currentDataUrl
+            try {
+              lastText = clipboard.readText()
+            } catch (err) {
+              console.error('Failed to update lastText on image copy:', err)
+            }
+            
+            const history = store.get('history') as ClipboardItem[]
+            
+            const newItem: ClipboardItem = {
+              id: uuidv4(),
+              content: currentDataUrl,
+              type: 'image',
+              timestamp: Date.now(),
+              isStarred: false,
+            }
+            
+            const updatedHistory = [newItem, ...history].slice(0, 100)
+            store.set('history', updatedHistory)
+            win?.webContents.send('history:updated', updatedHistory)
+            showClipboardNotification('Image copied to clipboard')
           }
-          
-          const updatedHistory = [newItem, ...history].slice(0, 100)
-          store.set('history', updatedHistory)
-          win?.webContents.send('history:updated', updatedHistory)
-          showClipboardNotification('Image copied to clipboard')
-        }
-      } else {
-        const currentText = clipboard.readText()
-        if (currentText && currentText !== lastText) {
-          lastText = currentText
-          lastImage = ''
-          
-          const history = store.get('history') as ClipboardItem[]
-          if (history.length > 0 && history[0].content === currentText && history[0].type === 'text') return
-          
-          const newItem: ClipboardItem = {
-            id: uuidv4(),
-            content: currentText,
-            type: 'text',
-            timestamp: Date.now(),
-            isStarred: false,
+        } else {
+          const currentText = clipboard.readText()
+          if (currentText && currentText !== lastText) {
+            lastText = currentText
+            lastImage = ''
+            
+            const history = store.get('history') as ClipboardItem[]
+            if (history.length > 0 && history[0].content === currentText && history[0].type === 'text') return
+            
+            const newItem: ClipboardItem = {
+              id: uuidv4(),
+              content: currentText,
+              type: 'text',
+              timestamp: Date.now(),
+              isStarred: false,
+            }
+            
+            const updatedHistory = [newItem, ...history].slice(0, 100)
+            store.set('history', updatedHistory)
+            win?.webContents.send('history:updated', updatedHistory)
+            showClipboardNotification(currentText)
           }
-          
-          const updatedHistory = [newItem, ...history].slice(0, 100)
-          store.set('history', updatedHistory)
-          win?.webContents.send('history:updated', updatedHistory)
-          showClipboardNotification(currentText)
         }
+      } catch (error) {
+        console.error('Error handling clipboard event:', error)
       }
     })
+  }).catch((error) => {
+    console.error('Failed to load clipboard-event watcher:', error)
   })
 
   // Enable Hotkey
