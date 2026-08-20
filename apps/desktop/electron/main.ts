@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 import Store from 'electron-store'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import fs from 'node:fs'
 import { execFile } from 'node:child_process'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -48,6 +49,49 @@ const isValidImageDataUrl = (content: string): boolean => {
   if (typeof content !== 'string' || !content) return false
   const dataUrlRegex = /^data:image\/(png|jpeg|jpg|webp|gif|bmp|svg\+xml);base64,/i
   return dataUrlRegex.test(content)
+}
+
+/**
+ * Utility function to get log file path inside user data directory.
+ */
+const getLogFilePath = (): string => {
+  try {
+    const logDir = path.join(app.getPath('userData'), 'logs')
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true })
+    }
+    return path.join(logDir, 'app.log')
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * Structured logger function for errors with contextual metadata and file persistence.
+ */
+const logError = (message: string, error?: unknown, context?: Record<string, unknown>) => {
+  const timestamp = new Date().toISOString()
+  const logData = {
+    timestamp,
+    level: 'ERROR',
+    message,
+    version: app.getVersion(),
+    platform: process.platform,
+    arch: process.arch,
+    context: context || {},
+    error: error instanceof Error ? { message: error.message, stack: error.stack } : String(error || '')
+  }
+
+  console.error(`[${timestamp}] ERROR: ${message}`, error, context || '')
+
+  try {
+    const logFilePath = getLogFilePath()
+    if (logFilePath) {
+      fs.appendFileSync(logFilePath, JSON.stringify(logData) + '\n', 'utf-8')
+    }
+  } catch (fsErr) {
+    console.error('Failed to write to log file:', fsErr)
+  }
 }
 
 interface ClipboardItem {
@@ -152,16 +196,29 @@ function setupAutoUpdater() {
   })
 
   autoUpdater.on('error', (err) => {
-    console.error('Error in auto-updater:', err)
+    logError('Error in auto-updater', err, {
+      currentVersion: app.getVersion(),
+      autoDownload: autoUpdater.autoDownload
+    })
+    if (win) {
+      win.webContents.send('update:error', {
+        message: err.message || 'Auto-update failed',
+        version: app.getVersion()
+      })
+    }
   })
 
   // Check for updates every 24 hours
   setInterval(() => {
-    autoUpdater.checkForUpdatesAndNotify()
+    autoUpdater.checkForUpdatesAndNotify().catch((err) => {
+      logError('Periodic update check failed', err)
+    })
   }, 1000 * 60 * 60 * 24)
 
   // Initial check
-  autoUpdater.checkForUpdatesAndNotify()
+  autoUpdater.checkForUpdatesAndNotify().catch((err) => {
+    logError('Initial update check failed', err)
+  })
 }
 
 function toggleWindow() {
@@ -181,11 +238,20 @@ function registerHotkey() {
   
   globalShortcut.unregisterAll()
   try {
-    globalShortcut.register(hotkey, () => {
+    const registered = globalShortcut.register(hotkey, () => {
       toggleWindow()
     })
+    if (!registered) {
+      logError('Failed to register hotkey', new Error(`Hotkey '${hotkey}' registration returned false`), {
+        hotkey,
+        platform: process.platform
+      })
+    }
   } catch (e) {
-    console.error('Failed to register hotkey:', e)
+    logError('Failed to register hotkey', e, {
+      hotkey,
+      platform: process.platform
+    })
   }
 }
 
@@ -198,7 +264,7 @@ function simulatePaste() {
       ['-NoProfile', '-NonInteractive', '-Command', "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^v')"],
       (error) => {
         if (error) {
-          console.error('Failed to simulate paste on Windows:', error)
+          logError('Failed to simulate paste on Windows', error, { platform })
         }
       }
     )
@@ -209,7 +275,7 @@ function simulatePaste() {
       ['-e', 'tell application "System Events" to keystroke "v" using command down'],
       (error) => {
         if (error) {
-          console.error('Failed to simulate paste on macOS:', error)
+          logError('Failed to simulate paste on macOS', error, { platform })
         }
       }
     )
@@ -385,7 +451,7 @@ app.whenReady().then(() => {
       lastText = clipboard.readText()
       lastImage = clipboard.readImage().toDataURL()
     } catch (error) {
-      console.error('Failed to read initial clipboard content:', error)
+      logError('Failed to read initial clipboard content', error)
     }
 
     watcher.on('copy', () => {
@@ -401,7 +467,7 @@ app.whenReady().then(() => {
             try {
               lastText = clipboard.readText()
             } catch (err) {
-              console.error('Failed to update lastText on image copy:', err)
+              logError('Failed to update lastText on image copy', err)
             }
             
             const history = store.get('history') as ClipboardItem[]
@@ -443,11 +509,11 @@ app.whenReady().then(() => {
           }
         }
       } catch (error) {
-        console.error('Error handling clipboard event:', error)
+        logError('Error handling clipboard event', error)
       }
     })
   }).catch((error) => {
-    console.error('Failed to load clipboard-event watcher:', error)
+    logError('Failed to load clipboard-event watcher', error)
   })
 
   // Enable Hotkey
@@ -461,7 +527,7 @@ ipcMain.on('hide-window', () => {
   try {
     win?.hide()
   } catch (error) {
-    console.error('Error in hide-window handler:', error)
+    logError('Error in hide-window handler', error)
   }
 })
 
@@ -475,7 +541,7 @@ ipcMain.handle('history:get', (_event, { offset = 0, limit = 20 } = {}) => {
       hasMore: offset + limit < history.length
     }
   } catch (error) {
-    console.error('Error in history:get handler:', error)
+    logError('Error in history:get handler', error)
     return { items: [], total: 0, hasMore: false }
   }
 })
@@ -487,7 +553,7 @@ ipcMain.handle('history:remove', (_event, id: string) => {
     store.set('history', updatedHistory)
     return updatedHistory
   } catch (error) {
-    console.error('Error in history:remove handler:', error)
+    logError('Error in history:remove handler', error, { id })
     return (store.get('history') as ClipboardItem[]) || []
   }
 })
@@ -501,7 +567,7 @@ ipcMain.handle('history:toggle-star', (_event, id: string) => {
     store.set('history', updatedHistory)
     return updatedHistory
   } catch (error) {
-    console.error('Error in history:toggle-star handler:', error)
+    logError('Error in history:toggle-star handler', error, { id })
     return (store.get('history') as ClipboardItem[]) || []
   }
 })
@@ -518,7 +584,7 @@ ipcMain.handle('history:search', (_event, { query, offset = 0, limit = 20 }) => 
       hasMore: offset + limit < filtered.length
     }
   } catch (error) {
-    console.error('Error in history:search handler:', error)
+    logError('Error in history:search handler', error, { query })
     return { items: [], total: 0, hasMore: false }
   }
 })
@@ -527,7 +593,7 @@ ipcMain.handle('settings:get', () => {
   try {
     return store.get('settings')
   } catch (error) {
-    console.error('Error in settings:get handler:', error)
+    logError('Error in settings:get handler', error)
     return null
   }
 })
@@ -555,7 +621,7 @@ ipcMain.handle('settings:update', (_event, newSettings: Settings) => {
     
     return newSettings
   } catch (error) {
-    console.error('Error in settings:update handler:', error)
+    logError('Error in settings:update handler', error)
     return store.get('settings')
   }
 })
@@ -564,12 +630,12 @@ ipcMain.on('clipboard:paste-item', (_event, item: { content: string, type: 'text
   try {
     if (item.type === 'image') {
       if (!isValidImageDataUrl(item.content)) {
-        console.error('Invalid image Data URL format in clipboard:paste-item handler')
+        logError('Invalid image Data URL format in clipboard:paste-item handler')
         return
       }
       const image = nativeImage.createFromDataURL(item.content)
       if (image.isEmpty()) {
-        console.error('Created nativeImage is empty in clipboard:paste-item handler')
+        logError('Created nativeImage is empty in clipboard:paste-item handler')
         return
       }
       clipboard.writeImage(image)
@@ -599,7 +665,7 @@ ipcMain.on('clipboard:paste-item', (_event, item: { content: string, type: 'text
       win?.hide()
     }
   } catch (error) {
-    console.error('Error in clipboard:paste-item handler:', error)
+    logError('Error in clipboard:paste-item handler', error)
   }
 })
 
@@ -653,7 +719,7 @@ ipcMain.on('preview:show', (_event, { id, content, isManual }: { id: string, con
       hoverPreviewWin.showInactive()
     }
   } catch (error) {
-    console.error('Error in preview:show handler:', error)
+    logError('Error in preview:show handler', error, { id })
   }
 })
 
@@ -670,7 +736,7 @@ ipcMain.on('preview:hide', (_event, { id, isManual }: { id: string, isManual: bo
     
     win?.webContents.send('preview:hidden', id)
   } catch (error) {
-    console.error('Error in preview:hide handler:', error)
+    logError('Error in preview:hide handler', error, { id })
   }
 })
 
@@ -679,7 +745,7 @@ ipcMain.handle('preview:get-content', (_event, id: string) => {
     if (!id || id === 'null') return lastHoverContent
     return contentCache.get(id) || null
   } catch (error) {
-    console.error('Error in preview:get-content handler:', error)
+    logError('Error in preview:get-content handler', error, { id })
     return null
   }
 })
@@ -688,7 +754,7 @@ ipcMain.handle('app:version', () => {
   try {
     return app.getVersion()
   } catch (error) {
-    console.error('Error in app:version handler:', error)
+    logError('Error in app:version handler', error)
     return ''
   }
 })
