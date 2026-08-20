@@ -41,6 +41,15 @@ const getIconPath = (): string => {
   }
 };
 
+/**
+ * Utility function to validate if a string is a valid base64-encoded image Data URL.
+ */
+const isValidImageDataUrl = (content: string): boolean => {
+  if (typeof content !== 'string' || !content) return false
+  const dataUrlRegex = /^data:image\/(png|jpeg|jpg|webp|gif|bmp|svg\+xml);base64,/i
+  return dataUrlRegex.test(content)
+}
+
 interface ClipboardItem {
   id: string
   content: string
@@ -540,7 +549,15 @@ ipcMain.handle('settings:update', (_event, newSettings: Settings) => {
 ipcMain.on('clipboard:paste-item', (_event, item: { content: string, type: 'text' | 'image' }) => {
   try {
     if (item.type === 'image') {
+      if (!isValidImageDataUrl(item.content)) {
+        console.error('Invalid image Data URL format in clipboard:paste-item handler')
+        return
+      }
       const image = nativeImage.createFromDataURL(item.content)
+      if (image.isEmpty()) {
+        console.error('Created nativeImage is empty in clipboard:paste-item handler')
+        return
+      }
       clipboard.writeImage(image)
     } else {
       clipboard.writeText(item.content)
